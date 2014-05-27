@@ -8,27 +8,37 @@ public class Keytop extends Shape
 {
   public const BORDER_COLOR:uint = 0x666666;
 
-  private var _color:uint;
+  private var _pos:Point;
   private var _rect:Rectangle;
+  private var _color:uint;
   private var _duration:int;
   private var _count:int;
-  private var _highlit:Boolean;
   
-  public function Keytop(rect:Rectangle)
+  public function Keytop(pos:Point)
   {
-    x = rect.x;
-    y = rect.y;
-    _rect = rect;
+    _pos = pos;
+  }
+
+  public function get pos():Point
+  {
+    return _pos;
+  }
+
+  public function set rect(v:Rectangle):void
+  {
+    _rect = v;
     repaint();
   }
   
   public function get rect():Rectangle
   {
-    return _rect.clone();
+    return _rect;
   }
 
   public function repaint():void
   {
+    x = _rect.x;
+    y = _rect.y;
     graphics.clear();
     graphics.lineStyle(0, BORDER_COLOR);
     graphics.drawRect(0, 0, _rect.width, _rect.height);

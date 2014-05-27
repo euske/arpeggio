@@ -37,6 +37,7 @@ public class GameScreen extends Screen
     _keypad = new Keypad();
     _keypad.x = 100;
     _keypad.y = 100;
+    _keypad.layout();
     _keypad.addEventListener(KeypadEvent.PRESSED, onKeypadPressed);
     addChild(_keypad);
 
@@ -72,7 +73,6 @@ public class GameScreen extends Screen
     var text:String = "TEXT";
     Font.renderText(_status.bitmapData, text);
 
-    _keypad.update(_clock);
     if (0 < _repeat) {
       if ((_clock % 12) == 0) {
 	if (_toplay == 0) {
@@ -83,6 +83,7 @@ public class GameScreen extends Screen
       }
     }
 
+    _keypad.update(_clock);
     _clock++;
   }
 
@@ -99,7 +100,7 @@ public class GameScreen extends Screen
 
   private function playKey(i:int):void
   {
-    var key:Keytop = _keypad.getKey(i, 0);
+    var key:Keytop = _keypad.getKeyByPos(i, 0);
     if (i < _arpeggio.numNotes) {
       var color:uint = _arpeggio.getColor(i);
       key.activate(color);
@@ -119,10 +120,9 @@ public class GameScreen extends Screen
   private function onKeypadPressed(e:KeypadEvent):void
   {
     var keypad:Keypad = Keypad(e.target);
-    var p:Point = e.point;
-    var key:Keytop = keypad.getKey(p.x, p.y);
+    var key:Keytop = e.key;
     if (key != null) {
-      var i:int = p.x;
+      var i:int = key.pos.x;
       if (_repeat == 0) {
 	if (i == _toplay) {
 	  playKey(_toplay);

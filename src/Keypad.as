@@ -6,10 +6,6 @@ import flash.geom.Point;
 
 public class Keypad extends Sprite
 {
-  public static const MARGIN:int = 4;
-  public static const KEY_WIDTH:int = 32;
-  public static const KEY_HEIGHT:int = 32;
-
   public static const KEYCODES:Array = 
     [
      [ 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 189, 187 ], // "1234567890-="
@@ -18,35 +14,28 @@ public class Keypad extends Sprite
      [ 90, 88, 67, 86, 66, 78, 77, 188, 190, 191 ],	   // "zxcvbnm,./"
      ];
 
-  private var _keycode2pt:Array;
-  private var _pt2key:Array;
+  private var _keycode2key:Array;
+  private var _pos2key:Array;
   private var _keys:Array;
   private var _particles:Array;
 
   public function Keypad()
   {
-    var x:int, y:int, row:Array;
-    _keycode2pt = new Array(256);
-    for (y = 0; y < KEYCODES.length; y++) {
-      row = KEYCODES[y];
-      for (x = 0; x < row.length; x++) {
-	var code:int = row[x];
-	_keycode2pt[code] = new Point(x, y);
-      }
-    }
-
     _keys = new Array();
-    _pt2key = new Array(KEYCODES.length);
-    for (y = 0; y < _pt2key.length; y++) {
-      row = new Array(KEYCODES[y].length);
-      for (x = 0; x < row.length; x++) {
-	var r:Rectangle = getKeyRect(x, y);
-	var key:Keytop = new Keytop(r);
-	addChild(key);
-	row[x] = _keys.length;
+    _keycode2key = new Array(256);
+    _pos2key = new Array(KEYCODES.length);
+
+    for (var y:int = 0; y < KEYCODES.length; y++) {
+      var row:Array = KEYCODES[y];
+      _pos2key[y] = new Array(row.length);
+      for (var x:int = 0; x < row.length; x++) {
+	var code:int = row[x];
+	var pos:Point = new Point(x, y);
+	var key:Keytop = new Keytop(pos);
+	_keycode2key[code] = key;
+	_pos2key[y][x] = key;
 	_keys.push(key);
       }
-      _pt2key[y] = row;
     }
 
     _particles = new Array();
@@ -62,16 +51,11 @@ public class Keypad extends Sprite
     return KEYCODES[0].length;
   }
 
-  public function get keys():Array
-  {
-    return _keys;
-  }
-
   public function keydown(keycode:int):void
   {
-    var p:Point = getPoint(keycode);
-    if (p != null) {
-      dispatchEvent(new KeypadEvent(KeypadEvent.PRESSED, p));
+    var key:Keytop = getKeyByCode(keycode);
+    if (key != null) {
+      dispatchEvent(new KeypadEvent(KeypadEvent.PRESSED, key));
     }
   }
 
@@ -80,6 +64,7 @@ public class Keypad extends Sprite
     for each (var key:Keytop in _keys) {
       key.update(t);
     }
+    
     for (var i:int = 0; i < _particles.length; i++) {
       var part:Particle = _particles[i];
       part.update();
@@ -91,6 +76,45 @@ public class Keypad extends Sprite
     }
   }
 
+  public function clear():void
+  {
+    for each (var key:Keytop in _keys) {
+      removeChild(key);
+    }
+  }
+
+  public function layout(kw:int=32, kh:int=32, margin:int=4):void
+  {
+    for each (var key:Keytop in _keys) {
+      var pos:Point = key.pos;
+      var dx:int = kw*pos.y / 4;
+      key.rect = new Rectangle((kw + margin) * pos.x + dx,
+			       (kh + margin) * pos.y,
+			       kw, kh);
+      addChild(key);
+    }
+  }
+
+  public function getKeyByCode(code:int):Keytop
+  {
+    if (0 <= code && code < _keycode2key.length) {
+      return _keycode2key[code];
+    }
+    return null;
+  }
+
+  public function getKeyByPos(x:int, y:int):Keytop
+  {
+    if (0 <= y && y < _pos2key.length) {
+      var row:Array = _pos2key[y];
+      if (0 <= x && x < row.length) {
+	var i:int = row[x];
+	return _keys[i];
+      }
+    }
+    return null;
+  }
+
   public function makeParticle(rect:Rectangle, color:uint, 
 			       duration:int=10, speed:int=2):Particle
   {
@@ -98,33 +122,6 @@ public class Keypad extends Sprite
     _particles.push(part);
     addChild(part);
     return part;
-  }
-
-  public function getPoint(keycode:int):Point
-  {
-    if (keycode < 0 || _keycode2pt.length <= keycode) return null;
-    return _keycode2pt[keycode];
-  }
-
-  public function getKeyRect(x:int, y:int):Rectangle
-  {
-    var dx:int = KEY_WIDTH*y / 4;
-    return new Rectangle((KEY_WIDTH + MARGIN) * x + dx,
-			 (KEY_HEIGHT + MARGIN) * y,
-			 KEY_WIDTH,
-			 KEY_HEIGHT);
-  }
-
-  public function getKey(x:int, y:int):Keytop
-  {
-    if (0 <= y && y < _pt2key.length) {
-      var row:Array = _pt2key[y];
-      if (0 <= x && x < row.length) {
-	var i:int = row[x];
-	return _keys[i];
-      }
-    }
-    return null;
   }
 }
 

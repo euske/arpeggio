@@ -7,12 +7,12 @@ public class KeypadEvent extends Event
 {
   public static const PRESSED:String = "KeypadEvent.PRESSED";
 
-  public var point:Point;
+  public var key:Keytop;
 
-  public function KeypadEvent(type:String, point:Point)
+  public function KeypadEvent(type:String, key:Keytop)
   {
     super(type);
-    this.point = point;
+    this.key = key;
   }
 }
 
