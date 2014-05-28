@@ -78,7 +78,7 @@ public class GameScreen extends Screen
   // update()
   public override function update():void
   {
-    if (((_ticks-_start) % _interval) == 0) {
+    if (_start < _ticks && (_ticks % _interval) == 0) {
       if (0 < _repeat) {
 	if (_toplay == 0) {
 	  prepareTune();
@@ -120,14 +120,15 @@ public class GameScreen extends Screen
       }
     } else if (i < _arpeggio.numNotes) {
       var key:Keytop = _keypad.getKeyByPos(i, 0);
+      var pan:Number = _keypad.getPan(i);
       _keypad.flash(key, 0);
       if (_arpeggio.hitCorruption(i)) {
-	correctSound.play();
+	correctSound.play(0, 0, new SoundTransform(1.0, pan));
 	key.highlight(0xffffff);
 	_status.score++;
 	_status.update();
       } else {
-	wrongSound.play();
+	wrongSound.play(0, 0, new SoundTransform(1.0, pan));
 	key.highlight(0);
 	_status.miss++;
 	_status.update();
@@ -151,8 +152,8 @@ public class GameScreen extends Screen
     _keypad.y = (screenHeight-_keypad.rect.height)/2;
     _repeat = 0;
 
-    nextSound.play(0, 0, new SoundTransform(0.3));
-    _start = _ticks;
+    nextSound.play();
+    _start = _ticks+24;
   }
 
   private function playKey(i:int):void
@@ -161,7 +162,7 @@ public class GameScreen extends Screen
     var key:Keytop = _keypad.getKeyByPos(i, 0);
     key.highlight(color);
     _keypad.flash(key, color);
-    _arpeggio.playNote(i);
+    _arpeggio.playNote(i, _keypad.getPan(i));
   }
 
   private function incKey():void
@@ -305,12 +306,13 @@ class Arpeggio extends Object
     }
   }
 
-  public function playNote(i:int):void
+  public function playNote(i:int, pan:Number):void
   {
     var note:String = getNote(i);
     if (note) {
       var sound:SoundGenerator = new SoundGenerator(SoundGenerator.RECT);
       sound.pitch = SoundGenerator.getPitch(note);
+      sound.pan = pan;
       sound.volume = volume;
       sound.attack = attack;
       sound.decay = decay;

@@ -14,6 +14,7 @@ public class Keypad extends Sprite
      [ 90, 88, 67, 86, 66, 78, 77, 188, 190, 191 ],	   // "zxcvbnm,./"
      ];
 
+  private var _cols:int;
   private var _width:int;
   private var _height:int;
 
@@ -42,16 +43,6 @@ public class Keypad extends Sprite
     }
 
     _particles = new Array();
-  }
-
-  public function get rows():int
-  {
-    return KEYCODES.length;
-  }
-
-  public function get cols():int
-  {
-    return KEYCODES[0].length;
   }
 
   public function get rect():Rectangle
@@ -97,15 +88,17 @@ public class Keypad extends Sprite
 
   public function layoutFull(kw:int=32, kh:int=32, margin:int=4):void
   {
+    _cols = 0;
     _width = 0;
     _height = 0;
     for each (var key:Keytop in _keys) {
       var pos:Point = key.pos;
-      var dx:int = kw*pos.y / rows;
+      var dx:int = kw*pos.y / KEYCODES.length;
       key.rect = new Rectangle((kw + margin) * pos.x + dx,
 			       (kh + margin) * pos.y,
 			       kw, kh);
       addChild(key);
+      _cols = Math.max(_cols, pos.x+1);
       _width = Math.max(key.rect.right);
       _height = Math.max(key.rect.bottom);
     }
@@ -120,6 +113,7 @@ public class Keypad extends Sprite
       key.rect = new Rectangle((size+unit) * i, 0, size, size);
       addChild(key);
     }
+    _cols = n;
     _width = w;
     _height = size;
   }
@@ -129,6 +123,12 @@ public class Keypad extends Sprite
     if (key.rect != null) {
       makeParticle(key.rect, color);
     }
+  }
+
+  public function getPan(x:int):Number
+  {
+    var n:int = Math.floor(_cols/2);
+    return (x-n)/(n-1);
   }
 
   public function getKeyByCode(code:int):Keytop
