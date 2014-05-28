@@ -189,7 +189,11 @@ class Particle extends Shape
     x = _rect.x-w;
     y = _rect.y-w;
     graphics.clear();
-    graphics.beginFill(_color, 1.0-_count/_duration);
+    if (_color != 0) {
+      graphics.beginFill(_color, 1.0-_count/_duration);
+    } else {
+      graphics.lineStyle(1, Keytop.BORDER_COLOR);
+    }
     graphics.drawRect(0, 0, _rect.width+w*2, _rect.height+w*2);
     _count++;
     if (_duration <= _count) {
