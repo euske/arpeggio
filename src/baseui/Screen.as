@@ -6,6 +6,25 @@ import flash.display.Sprite;
 //
 public class Screen extends Sprite
 {
+  private var _width:int;
+  private var _height:int;
+
+  public function Screen(width:int, height:int):void
+  {
+    _width = width;
+    _height = height;
+  }
+
+  public function get screenWidth():int
+  {
+    return _width;
+  }
+
+  public function get screenHeight():int
+  {
+    return _height;
+  }
+
   // open()
   public virtual function open():void
   {

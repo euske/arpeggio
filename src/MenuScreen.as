@@ -13,6 +13,8 @@ public class MenuScreen extends Screen
 {
   public function MenuScreen(width:int, height:int)
   {
+    super(width, height);
+
     var text:Bitmap;
     text = Font.createText("ARPEGGIO\nPRESS ENTER TO START", 0xffffff, 2, 2);
     text.x = Math.floor(width-text.width)/2;

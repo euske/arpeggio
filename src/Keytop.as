@@ -19,6 +19,11 @@ public class Keytop extends Shape
     _pos = pos;
   }
 
+  public override function toString():String
+  {
+    return ("<Keytop: "+_pos.x+","+_pos.y+">");
+  }
+
   public function get pos():Point
   {
     return _pos;
@@ -35,25 +40,27 @@ public class Keytop extends Shape
     return _rect;
   }
 
-  public function repaint():void
-  {
-    x = _rect.x;
-    y = _rect.y;
-    graphics.clear();
-    graphics.lineStyle(0, BORDER_COLOR);
-    graphics.drawRect(0, 0, _rect.width, _rect.height);
-    if (_count < _duration) {
-      graphics.beginFill(_color, 1.0-_count/_duration);
-      graphics.drawRect(0, 0, _rect.width, _rect.height);
-    }
-  }
-
-  public function activate(color:uint, duration:int=10):void
+  public function blink(color:uint, duration:int=10):void
   {
     _color = color;
     _duration = duration;
     _count = 0;
     repaint();
+  }
+
+  public function repaint():void
+  {
+    if (_rect != null) {
+      x = _rect.x;
+      y = _rect.y;
+      graphics.clear();
+      graphics.lineStyle(0, BORDER_COLOR);
+      graphics.drawRect(0, 0, _rect.width, _rect.height);
+      if (_count < _duration) {
+	graphics.beginFill(_color, 1.0-_count/_duration);
+	graphics.drawRect(0, 0, _rect.width, _rect.height);
+      }
+    }
   }
 
   public function update(t:int):void

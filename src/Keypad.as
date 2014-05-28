@@ -62,7 +62,9 @@ public class Keypad extends Sprite
   public function update(t:int):void
   {
     for each (var key:Keytop in _keys) {
-      key.update(t);
+      if (key.parent == this) {
+	key.update(t);
+      }
     }
     
     for (var i:int = 0; i < _particles.length; i++) {
@@ -79,11 +81,13 @@ public class Keypad extends Sprite
   public function clear():void
   {
     for each (var key:Keytop in _keys) {
-      removeChild(key);
+      if (key.parent == this) {
+	removeChild(key);
+      }
     }
   }
 
-  public function layout(kw:int=32, kh:int=32, margin:int=4):void
+  public function layoutFull(kw:int=32, kh:int=32, margin:int=4):void
   {
     for each (var key:Keytop in _keys) {
       var pos:Point = key.pos;
@@ -92,6 +96,24 @@ public class Keypad extends Sprite
 			       (kh + margin) * pos.y,
 			       kw, kh);
       addChild(key);
+    }
+  }
+
+  public function layoutLine(n:int, w:int):int
+  {
+    var unit:int = w/(5*(n-1)+4);
+    for (var i:int = 0; i < n; i++) {
+      var key:Keytop = getKeyByPos(i, 0);
+      key.rect = new Rectangle(unit*5 * i, 0, unit*4, unit*4);
+      addChild(key);
+    }
+    return unit;
+  }
+
+  public function highlight(key:Keytop, color:uint):void
+  {
+    if (key.rect != null) {
+      makeParticle(key.rect, color);
     }
   }
 
@@ -106,10 +128,9 @@ public class Keypad extends Sprite
   public function getKeyByPos(x:int, y:int):Keytop
   {
     if (0 <= y && y < _pos2key.length) {
-      var row:Array = _pos2key[y];
-      if (0 <= x && x < row.length) {
-	var i:int = row[x];
-	return _keys[i];
+      var a:Array = _pos2key[y];
+      if (0 <= x && x < a.length) {
+	return a[x];
       }
     }
     return null;

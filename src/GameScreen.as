@@ -31,13 +31,12 @@ public class GameScreen extends Screen
 
   public function GameScreen(width:int, height:int)
   {
+    super(width, height);
+
     _status = Font.createText("TEXT");
     addChild(_status);
 
     _keypad = new Keypad();
-    _keypad.x = 100;
-    _keypad.y = 100;
-    _keypad.layout();
     _keypad.addEventListener(KeypadEvent.PRESSED, onKeypadPressed);
     addChild(_keypad);
 
@@ -49,7 +48,7 @@ public class GameScreen extends Screen
   {
     _repeat = 0;
     _toplay = 0;
-    _arpeggio.setTune(Arpeggio.PAT0, Arpeggio.WRONG0);
+    prepareTune();
   }
 
   // close()
@@ -76,7 +75,7 @@ public class GameScreen extends Screen
     if (0 < _repeat) {
       if ((_clock % 12) == 0) {
 	if (_toplay == 0) {
-	  _arpeggio.setCorruption(1);
+	  prepareTune();
 	}
 	playKey(_toplay);
 	incKey();
@@ -98,13 +97,27 @@ public class GameScreen extends Screen
   {
   }
 
+  private function prepareTune():void
+  {
+    _arpeggio.setTune(Arpeggio.PAT0, Arpeggio.WRONG0);
+    if (0 < _repeat) {
+      _arpeggio.setCorruption(1);
+    }
+
+    _keypad.clear();
+    var w:int = screenWidth-200;
+    var h:int = _keypad.layoutLine(_arpeggio.numNotes, w);
+    _keypad.x = (screenWidth-w)/2;
+    _keypad.y = (screenHeight-h)/2;
+  }
+
   private function playKey(i:int):void
   {
     var key:Keytop = _keypad.getKeyByPos(i, 0);
     if (i < _arpeggio.numNotes) {
       var color:uint = _arpeggio.getColor(i);
-      key.activate(color);
-      _keypad.makeParticle(key.rect, color | 0x888888);
+      key.blink(color);
+      _keypad.highlight(key, color | 0x888888);
       _arpeggio.playNote(i);
     }
   }
