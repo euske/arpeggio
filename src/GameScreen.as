@@ -2,6 +2,7 @@ package {
 
 import flash.media.Sound;
 import flash.media.SoundTransform;
+import flash.geom.Rectangle;
 import baseui.Screen;
 import baseui.ScreenEvent;
 
@@ -82,9 +83,11 @@ public class GameScreen extends Screen
       }
     }
 
+    graphics.clear();
     graphics.lineStyle(0, Keytop.BORDER_COLOR);
     graphics.moveTo(0, screenHeight/2);
     graphics.lineTo(screenWidth, screenHeight/2);
+    drawBackground((_ticks % 30)-15);
 
     _status.update();
     _keypad.update();
@@ -102,6 +105,28 @@ public class GameScreen extends Screen
   {
   }
 
+  private function onKeypadPressed(e:KeypadEvent):void
+  {
+    var keypad:Keypad = Keypad(e.target);
+    var key:Keytop = e.key;
+    if (key != null) {
+      var i:int = key.pos.x;
+      if (_repeat == 0) {
+	if (i == _toplay) {
+	  playKey(_toplay);
+	  incKey();
+	}
+      } else if (i < _arpeggio.numNotes) {
+	playKey(i);
+	if (_arpeggio.isCorrupted(i)) {
+	  correctSound.play();
+	} else {
+	  wrongSound.play();
+	}
+      }
+    }
+  }
+
   private function prepareTune():void
   {
     _arpeggio.setTune(Arpeggio.PAT0, Arpeggio.WRONG0);
@@ -111,8 +136,8 @@ public class GameScreen extends Screen
 
     _keypad.clear();
     _keypad.layoutLine(_arpeggio.numNotes, screenWidth-200);
-    _keypad.x = (screenWidth-_keypad.padWidth)/2;
-    _keypad.y = (screenHeight-_keypad.padHeight)/2;
+    _keypad.x = (screenWidth-_keypad.rect.width)/2;
+    _keypad.y = (screenHeight-_keypad.rect.height)/2;
 
     nextSound.play(0, 0, new SoundTransform(0.3));
   }
@@ -135,26 +160,26 @@ public class GameScreen extends Screen
       _repeat++;
     }
   }
-  
-  private function onKeypadPressed(e:KeypadEvent):void
+
+  private const vx:int = 12;
+  private const vy:int = 4;
+  private function drawBackground(t:int):void
   {
-    var keypad:Keypad = Keypad(e.target);
-    var key:Keytop = e.key;
-    if (key != null) {
-      var i:int = key.pos.x;
-      if (_repeat == 0) {
-	if (i == _toplay) {
-	  playKey(_toplay);
-	  incKey();
-	}
-      } else if (i < _arpeggio.numNotes) {
-	playKey(i);
-	if (_arpeggio.isCorrupted(i)) {
-	  correctSound.play();
-	} else {
-	  wrongSound.play();
-	}
-      }
+    var r:Rectangle = _keypad.rect;
+    var y0:int = screenHeight/2;
+    if (t < 0) { 
+      var h:Number = screenHeight/4+vy*t;
+      graphics.lineStyle(0, 0x666666);
+      graphics.drawRect(r.left-vx*t, y0-h,
+			r.width+2*vx*t, h);
+    } else if (t < 10) {
+      var t0:Number = 40/(10-t);
+      var t1:Number = 40/(10.5-t);
+      graphics.beginFill(0x666666);
+      graphics.moveTo(r.left-vx*t0, y0+vy*t0);
+      graphics.lineTo(r.left-vx*t1, y0+vy*t1);
+      graphics.lineTo(r.right+vx*t1, y0+vy*t1);
+      graphics.lineTo(r.right+vx*t0, y0+vy*t0);
     }
   }
 }

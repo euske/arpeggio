@@ -54,14 +54,9 @@ public class Keypad extends Sprite
     return KEYCODES[0].length;
   }
 
-  public function get padWidth():int
+  public function get rect():Rectangle
   {
-    return _width;
-  }
-
-  public function get padHeight():int
-  {
-    return _height;
+    return new Rectangle(x, y, _width, _height);
   }
 
   public function keydown(keycode:int):void
