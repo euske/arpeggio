@@ -1,39 +1,40 @@
 package {
 
-import flash.ui.Keyboard;
 import flash.media.Sound;
-import flash.display.Bitmap;
-import flash.utils.getTimer;
-import flash.geom.Point;
-import baseui.Font;
+import flash.media.SoundTransform;
 import baseui.Screen;
 import baseui.ScreenEvent;
-import baseui.SoundLoop;
 
 //  GameScreen
 //
 public class GameScreen extends Screen
 {
-  private var _clock:int;
-  private var _status:Bitmap;
-  private var _arpeggio:Arpeggio;
-  private var _keypad:Keypad;
-
-  private var _repeat:int;
-  private var _toplay:int;
-
   [Embed(source="../assets/correct.mp3", mimeType="audio/mpeg")]
   private static const CorrectSoundCls:Class;
   private const correctSound:Sound = new CorrectSoundCls();
   [Embed(source="../assets/wrong.mp3", mimeType="audio/mpeg")]
   private static const WrongSoundCls:Class;
   private const wrongSound:Sound = new WrongSoundCls();
+  [Embed(source="../assets/next.mp3", mimeType="audio/mpeg")]
+  private static const NextSoundCls:Class;
+  private const nextSound:Sound = new NextSoundCls();
+
+  private var _status:Status;
+  private var _arpeggio:Arpeggio;
+  private var _keypad:Keypad;
+
+  private var _ticks:int;
+  private var _interval:int;
+  private var _toplay:int;
+  private var _repeat:int;
 
   public function GameScreen(width:int, height:int)
   {
     super(width, height);
 
-    _status = Font.createText("TEXT");
+    _status = new Status();
+    _status.x = (width-_status.width)/2;
+    _status.y = 4;
     addChild(_status);
 
     _keypad = new Keypad();
@@ -46,8 +47,10 @@ public class GameScreen extends Screen
   // open()
   public override function open():void
   {
-    _repeat = 0;
+    _ticks = 0;
+    _interval = 12;
     _toplay = 0;
+    _repeat = 0;
     prepareTune();
   }
 
@@ -69,11 +72,8 @@ public class GameScreen extends Screen
   // update()
   public override function update():void
   {
-    var text:String = "TEXT";
-    Font.renderText(_status.bitmapData, text);
-
     if (0 < _repeat) {
-      if ((_clock % 12) == 0) {
+      if ((_ticks % _interval) == 0) {
 	if (_toplay == 0) {
 	  prepareTune();
 	}
@@ -82,8 +82,13 @@ public class GameScreen extends Screen
       }
     }
 
-    _keypad.update(_clock);
-    _clock++;
+    graphics.lineStyle(0, Keytop.BORDER_COLOR);
+    graphics.moveTo(0, screenHeight/2);
+    graphics.lineTo(screenWidth, screenHeight/2);
+
+    _status.update();
+    _keypad.update();
+    _ticks++;
   }
 
   // keydown(keycode)
@@ -105,10 +110,11 @@ public class GameScreen extends Screen
     }
 
     _keypad.clear();
-    var w:int = screenWidth-200;
-    var h:int = _keypad.layoutLine(_arpeggio.numNotes, w);
-    _keypad.x = (screenWidth-w)/2;
-    _keypad.y = (screenHeight-h)/2;
+    _keypad.layoutLine(_arpeggio.numNotes, screenWidth-200);
+    _keypad.x = (screenWidth-_keypad.padWidth)/2;
+    _keypad.y = (screenHeight-_keypad.padHeight)/2;
+
+    nextSound.play(0, 0, new SoundTransform(0.3));
   }
 
   private function playKey(i:int):void
@@ -116,8 +122,8 @@ public class GameScreen extends Screen
     var key:Keytop = _keypad.getKeyByPos(i, 0);
     if (i < _arpeggio.numNotes) {
       var color:uint = _arpeggio.getColor(i);
-      key.blink(color);
-      _keypad.highlight(key, color | 0x888888);
+      key.highlight(color);
+      _keypad.flash(key, color);
       _arpeggio.playNote(i);
     }
   }
@@ -157,17 +163,12 @@ public class GameScreen extends Screen
 
 import flash.display.Shape;
 import flash.display.Sprite;
-import flash.display.DisplayObject;
+import flash.display.Bitmap;
 import flash.geom.Rectangle;
 import flash.geom.Point;
-import flash.ui.Keyboard;
 import flash.media.Sound;
 import flash.media.SoundChannel;
-import flash.events.Event;
 import baseui.Font;
-import baseui.Screen;
-import baseui.ScreenEvent;
-import baseui.SoundLoop;
 
 
 //  Arpeggio
@@ -273,5 +274,25 @@ class Arpeggio extends Object
   private function getRandomNote():String
   {
     return Utils.choose(_wrongs);
+  }
+}
+
+
+//  Status
+// 
+class Status extends Sprite
+{
+  private var _text:Bitmap;
+
+  public function Status()
+  {
+    _text = Font.createText("TEXT", 0xffffff, 0, 2);
+    addChild(_text);
+  }
+
+  public function update():void
+  {
+    var text:String = "TEXT";
+    Font.renderText(_text.bitmapData, text);
   }
 }

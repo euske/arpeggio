@@ -14,6 +14,9 @@ public class Keypad extends Sprite
      [ 90, 88, 67, 86, 66, 78, 77, 188, 190, 191 ],	   // "zxcvbnm,./"
      ];
 
+  private var _width:int;
+  private var _height:int;
+
   private var _keycode2key:Array;
   private var _pos2key:Array;
   private var _keys:Array;
@@ -51,6 +54,16 @@ public class Keypad extends Sprite
     return KEYCODES[0].length;
   }
 
+  public function get padWidth():int
+  {
+    return _width;
+  }
+
+  public function get padHeight():int
+  {
+    return _height;
+  }
+
   public function keydown(keycode:int):void
   {
     var key:Keytop = getKeyByCode(keycode);
@@ -59,11 +72,11 @@ public class Keypad extends Sprite
     }
   }
 
-  public function update(t:int):void
+  public function update():void
   {
     for each (var key:Keytop in _keys) {
       if (key.parent == this) {
-	key.update(t);
+	key.update();
       }
     }
     
@@ -89,28 +102,34 @@ public class Keypad extends Sprite
 
   public function layoutFull(kw:int=32, kh:int=32, margin:int=4):void
   {
+    _width = 0;
+    _height = 0;
     for each (var key:Keytop in _keys) {
       var pos:Point = key.pos;
-      var dx:int = kw*pos.y / 4;
+      var dx:int = kw*pos.y / rows;
       key.rect = new Rectangle((kw + margin) * pos.x + dx,
 			       (kh + margin) * pos.y,
 			       kw, kh);
       addChild(key);
+      _width = Math.max(key.rect.right);
+      _height = Math.max(key.rect.bottom);
     }
   }
 
-  public function layoutLine(n:int, w:int):int
+  public function layoutLine(n:int, w:int):void
   {
     var unit:int = w/(5*(n-1)+4);
+    var size:int = unit*4;
     for (var i:int = 0; i < n; i++) {
       var key:Keytop = getKeyByPos(i, 0);
-      key.rect = new Rectangle(unit*5 * i, 0, unit*4, unit*4);
+      key.rect = new Rectangle((size+unit) * i, 0, size, size);
       addChild(key);
     }
-    return unit;
+    _width = w;
+    _height = size;
   }
 
-  public function highlight(key:Keytop, color:uint):void
+  public function flash(key:Keytop, color:uint):void
   {
     if (key.rect != null) {
       makeParticle(key.rect, color);

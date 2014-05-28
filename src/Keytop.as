@@ -6,7 +6,7 @@ import flash.geom.Point;
 
 public class Keytop extends Shape
 {
-  public const BORDER_COLOR:uint = 0x666666;
+  public static const BORDER_COLOR:uint = 0x666666;
 
   private var _pos:Point;
   private var _rect:Rectangle;
@@ -40,7 +40,7 @@ public class Keytop extends Shape
     return _rect;
   }
 
-  public function blink(color:uint, duration:int=10):void
+  public function highlight(color:uint, duration:int=10):void
   {
     _color = color;
     _duration = duration;
@@ -55,6 +55,7 @@ public class Keytop extends Shape
       y = _rect.y;
       graphics.clear();
       graphics.lineStyle(0, BORDER_COLOR);
+      graphics.beginFill(0);
       graphics.drawRect(0, 0, _rect.width, _rect.height);
       if (_count < _duration) {
 	graphics.beginFill(_color, 1.0-_count/_duration);
@@ -63,7 +64,7 @@ public class Keytop extends Shape
     }
   }
 
-  public function update(t:int):void
+  public function update():void
   {
     if (_duration) {
       _count++;
