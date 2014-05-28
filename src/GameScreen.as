@@ -50,6 +50,9 @@ public class GameScreen extends Screen
   // open()
   public override function open():void
   {
+    _status.score = 0;
+    _status.miss = 0;
+    _status.update();
     _ticks = 0;
     _start = 0;
     _interval = 12;
@@ -91,7 +94,6 @@ public class GameScreen extends Screen
     graphics.lineTo(screenWidth, screenHeight/2);
     drawBackground((_ticks % 30)-15);
 
-    _status.update();
     _keypad.update();
     _ticks++;
   }
@@ -122,9 +124,13 @@ public class GameScreen extends Screen
       if (_arpeggio.hitCorruption(i)) {
 	correctSound.play();
 	key.highlight(0xffffff);
+	_status.score++;
+	_status.update();
       } else {
 	wrongSound.play();
 	key.highlight(0);
+	_status.miss++;
+	_status.update();
       }
     }
   }
@@ -132,7 +138,7 @@ public class GameScreen extends Screen
   private function prepareTune():void
   {
     if (0 < _repeat) {
-      if (3 <= _repeat) {
+      if (2 < _repeat && (_repeat % 2) == 1) {
 	_arpeggio.addCorruption(1);
       }
       return;
@@ -323,17 +329,21 @@ class Arpeggio extends Object
 // 
 class Status extends Sprite
 {
+  public var score:int;
+  public var miss:int;
+
   private var _text:Bitmap;
 
   public function Status()
   {
-    _text = Font.createText("TEXT", 0xffffff, 0, 2);
+    _text = Font.createText("SCORE: 00  MISS: 00", 0xffffff, 0, 2);
     addChild(_text);
   }
 
   public function update():void
   {
-    var text:String = "TEXT";
+    var text:String = "SCORE: "+Utils.format(score,2);
+    text += "  MISS: "+Utils.format(miss,2);
     Font.renderText(_text.bitmapData, text);
   }
 }
