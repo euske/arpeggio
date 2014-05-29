@@ -37,7 +37,7 @@ public class GameScreen extends Screen
 
     _status = new Status();
     _status.x = (width-_status.width)/2;
-    _status.y = 4;
+    _status.y = (height-_status.height-16);
     addChild(_status);
 
     _keypad = new Keypad();
@@ -55,7 +55,7 @@ public class GameScreen extends Screen
     _status.update();
     _ticks = 0;
     _start = 0;
-    _interval = 12;
+    _interval = 4;
     _toplay = 0;
     prepareTune();
   }
@@ -92,7 +92,7 @@ public class GameScreen extends Screen
     graphics.lineStyle(0, Keytop.BORDER_COLOR);
     graphics.moveTo(0, screenHeight/2);
     graphics.lineTo(screenWidth, screenHeight/2);
-    drawBackground((_ticks % 30)-15);
+    drawBackground((_ticks % 20)-16);
 
     _keypad.update();
     _ticks++;
@@ -152,8 +152,8 @@ public class GameScreen extends Screen
     _keypad.y = (screenHeight-_keypad.rect.height)/2;
     _repeat = 0;
 
+    _arpeggio.playNote(0, 0, 0.5, 2.0);
     nextSound.play();
-    _start = _ticks+24;
   }
 
   private function playKey(i:int):void
@@ -169,6 +169,9 @@ public class GameScreen extends Screen
   {
     _toplay = (_toplay+1) % _arpeggio.numNotes;
     if (_toplay == 0) {
+      if (_repeat == 0) {
+	_start = _ticks+12;
+      }
       _repeat++;
     }
   }
@@ -179,14 +182,14 @@ public class GameScreen extends Screen
   {
     var r:Rectangle = _keypad.rect;
     var y0:int = screenHeight/2;
+    var t0:Number = 20/(4-t);
+    var t1:Number = 20/(4.5-t);
     if (t < 0) { 
-      var h:Number = screenHeight/4+vy*t;
+      var h:Number = screenHeight*t1/20;
       graphics.lineStyle(0, 0x666666);
-      graphics.drawRect(r.left-vx*t, y0-h,
-			r.width+2*vx*t, h);
-    } else if (t < 10) {
-      var t0:Number = 40/(10-t);
-      var t1:Number = 40/(10.5-t);
+      graphics.drawRect(r.left-vx*t1, y0-h,
+			r.width+2*vx*t1, h);
+    } else if (t < 4) {
       graphics.beginFill(0x666666);
       graphics.moveTo(r.left-vx*t0, y0+vy*t0);
       graphics.lineTo(r.left-vx*t1, y0+vy*t1);
@@ -222,8 +225,6 @@ class Arpeggio extends Object
   public static const PAT3:String = "A4 A5 E5 F5 A5 E5 F5 A5";
 
   public var volume:Number = 0.1;
-  public var attack:Number = 0.01;
-  public var decay:Number = 0.3;
 
   private var _notes:Array;
   private var _wrongs:Array;
@@ -262,7 +263,7 @@ class Arpeggio extends Object
 	i = Utils.rnd(_notes.length);
 	if (_corrupted[i] == null) break;
       }
-      _corrupted[i] = getRandomNote();
+      _corrupted[i] = _wrongs[i];
       left--;
       n--;
     }
@@ -306,7 +307,7 @@ class Arpeggio extends Object
     }
   }
 
-  public function playNote(i:int, pan:Number):void
+  public function playNote(i:int, pan:Number, attack:Number=0.01, decay:Number=0.3):void
   {
     var note:String = getNote(i);
     if (note) {
@@ -318,11 +319,6 @@ class Arpeggio extends Object
       sound.decay = decay;
       sound.play();
     }
-  }
-
-  private function getRandomNote():String
-  {
-    return Utils.choose(_wrongs);
   }
 }
 
@@ -338,14 +334,21 @@ class Status extends Sprite
 
   public function Status()
   {
-    _text = Font.createText("SCORE: 00  MISS: 00", 0xffffff, 0, 2);
+    _text = Font.createText("SCORE: 00   MISS: 00", 0xffffff, 0, 2);
     addChild(_text);
   }
 
   public function update():void
   {
     var text:String = "SCORE: "+Utils.format(score,2);
-    text += "  MISS: "+Utils.format(miss,2);
+    text += "   MISS: "+Utils.format(miss,2);
     Font.renderText(_text.bitmapData, text);
   }
+}
+
+
+//  Overlay
+// 
+class Overlay extends Sprite
+{
 }
