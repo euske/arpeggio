@@ -27,9 +27,9 @@ public class GameScreen extends Screen
   private var _start:int;
   private var _ticks:int;
   private var _interval:int;
-  private var _toplay:int;
+  private var _nextnote:int;
   private var _repeat:int;
-  private var _tune:int;
+  private var _maxrepeat:int;
 
   public function GameScreen(width:int, height:int)
   {
@@ -50,14 +50,14 @@ public class GameScreen extends Screen
   // open()
   public override function open():void
   {
+    _status.level = 0;
     _status.score = 0;
     _status.miss = 0;
     _status.update();
+
     _ticks = 0;
     _start = 0;
-    _interval = 4;
-    _toplay = 0;
-    prepareTune();
+    setupLevel();
   }
 
   // close()
@@ -78,13 +78,13 @@ public class GameScreen extends Screen
   // update()
   public override function update():void
   {
-    if (_start < _ticks && (_ticks % _interval) == 0) {
-      if (0 < _repeat) {
-	if (_toplay == 0) {
-	  prepareTune();
+    if (_start < _ticks) {
+      if ((_ticks % _interval) == 0) {
+	if (_repeat != 0) {
+	  // auto play
+	  playKey(_nextnote);
+	  incKey();
 	}
-	playKey(_toplay);
-	incKey();
       }
     }
 
@@ -115,15 +115,15 @@ public class GameScreen extends Screen
     var keypad:Keypad = Keypad(e.target);
     var i:int = e.key.pos.x;
     if (_repeat == 0) {
-      if (i == _toplay) {
-	playKey(_toplay);
+      if (i == _nextnote) {
+	playKey(_nextnote);
 	incKey();
       }
     } else if (i < _arpeggio.numNotes) {
       var key:Keytop = _keypad.getKeyByPos(i, 0);
       var pan:Number = _keypad.getPan(i);
       _keypad.flash(key, 0);
-      if (_arpeggio.hitCorruption(i)) {
+      if (_arpeggio.hitNoise(i)) {
 	correctSound.play(0, 0, new SoundTransform(1.0, pan));
 	key.highlight(0xffffff);
 	_status.score++;
@@ -137,26 +137,6 @@ public class GameScreen extends Screen
     }
   }
 
-  private function prepareTune():void
-  {
-    if (0 < _repeat) {
-      if (2 < _repeat && (_repeat % 2) == 1) {
-	_arpeggio.addCorruption(1);
-      }
-      return;
-    }
-
-    _arpeggio.setTune(Arpeggio.PAT0, Arpeggio.WRONG0);
-    _keypad.clear();
-    _keypad.layoutLine(_arpeggio.numNotes, screenWidth/2);
-    _keypad.x = (screenWidth-_keypad.rect.width)/2;
-    _keypad.y = (screenHeight-_keypad.rect.height)/2;
-    _repeat = 0;
-
-    _arpeggio.playNote(0, 0, 0.5, 2.0);
-    nextSound.play();
-  }
-
   private function playKey(i:int):void
   {
     var color:uint = _arpeggio.getColor(i);
@@ -168,13 +148,64 @@ public class GameScreen extends Screen
 
   private function incKey():void
   {
-    _toplay = (_toplay+1) % _arpeggio.numNotes;
-    if (_toplay == 0) {
-      if (_repeat == 0) {
-	_start = _ticks+12;
-      }
+    _nextnote++;
+    if (_arpeggio.numNotes <= _nextnote) {
       _repeat++;
+      setupNoise();
     }
+  }
+
+  private function setupNoise():void
+  {
+    _nextnote = 0;
+
+    if (_repeat < 3) {
+      // Play first twice for free.
+
+    } else if (_repeat-3 < _maxrepeat) {
+      // Add noise.
+      switch (_status.level) {
+      case 0:
+      case 1:
+	_arpeggio.addNoise((((_repeat-3) % 2) == 0)? 1 : 0);
+	break;
+      }
+
+    } else {
+      // Next level.
+      _status.level++;
+      _status.update();
+      setupLevel();
+    }
+  }
+
+  private function setupLevel():void
+  {
+    // Setup a new tune.
+    switch (_status.level) {
+    case 0:
+      _arpeggio.setTune(Arpeggio.TUNE0, Arpeggio.NOISE0);
+      _interval = 10;
+      _maxrepeat = 3;
+      break;
+
+    case 1:
+      _arpeggio.setTune(Arpeggio.TUNE1, Arpeggio.NOISE1);
+      _interval = 8;
+      _maxrepeat = 5;
+      break;
+
+    }
+
+    _keypad.clear();
+    _keypad.layoutLine(_arpeggio.numNotes, screenWidth/2);
+    _keypad.x = (screenWidth-_keypad.rect.width)/2;
+    _keypad.y = (screenHeight-_keypad.rect.height)/2;
+    _repeat = 0;
+    _nextnote = 0;
+
+    nextSound.play();
+    _arpeggio.playNote(0, 0, 0.5, 2.0);
   }
 
   private function drawBand(t:int):void
@@ -223,87 +254,93 @@ import baseui.Font;
 // 
 class Arpeggio extends Object
 {
-  public static const PAT0:String = "C4 G4 E4 G4";
-  public static const WRONG0:String = "C4s F4 F4 A4s";
-  
-  public static const PAT1:String = "C5 G4 F4 G4 C5 G4 E4 G4";
-  public static const WRONG1:String = "C4s C5s D4s A3s F4s G4s A4s";
+  public static const TUNE0:String = "C4 G4 E4 G4";
+  public static const NOISE0:String = "B3 A4s C4s C5s";
 
-  public static const PAT2:String = "D5s A4 F4s A4 D5s A4 F4 A4";
-  public static const PAT3:String = "A4 A5 E5 F5 A5 E5 F5 A5";
+  public static const TUNE1:String = "F4 C4 A4 C5";
+  public static const NOISE1:String = "G4 B3 C5s D5s";
+  
+  public static const TUNE2:String = "C4 G3 D4 G4 E4 G4";
+  public static const NOISE2:String = "B3 D4s C4s F4s D4s C4s";
+
+  public static const TUNE4:String = "C5 G4 F4 G4 C5 G4 E4 G4";
+  public static const NOISE4:String = "C4s C5s D4s A3s F4s G4s A4s";
+
+  public static const TUNE5:String = "D5s A4 F4s A4 D5s A4 F4 A4";
+  public static const TUNE6:String = "A4 A5 E5 F5 A5 E5 F5 A5";
 
   public var volume:Number = 0.1;
 
-  private var _notes:Array;
-  private var _wrongs:Array;
-  private var _corrupted:Array;
+  private var _tune:Array;
+  private var _noisesrc:Array;
+  private var _noise:Array;
 
   public function Arpeggio()
   {
   }
 
-  public function setTune(pat:String, wrongpat:String):void
+  public function setTune(tune:String, noisesrc:String):void
   {
-    _notes = pat.split(/ /);
-    _wrongs = wrongpat.split(/ /);
-    clearCorruption();
+    _tune = tune.split(/ /);
+    _noisesrc = noisesrc.split(/ /);
+    clearNoise();
   }
   
-  public function clearCorruption():void
+  public function clearNoise():void
   {
-    _corrupted = new Array(_notes.length);
-    for (var i:int = 0; i < _corrupted.length; i++) {
-      _corrupted[i] = null;
+    _noise = new Array(_tune.length);
+    for (var i:int = 0; i < _noise.length; i++) {
+      _noise[i] = null;
     }
   }
 
-  public function addCorruption(n:int):void
+  public function addNoise(n:int):void
   {
     var left:int = 0;
     var i:int;
-    for (i = 0; i < _corrupted.length; i++) {
-      if (_corrupted[i] == null) {
+    for (i = 0; i < _noise.length; i++) {
+      if (_noise[i] == null) {
 	left++;
       }
     }
     while (0 < n && 0 < left) {
       while (true) {
-	i = Utils.rnd(_notes.length);
-	if (_corrupted[i] == null) break;
+	i = Utils.rnd(_tune.length);
+	if (_noise[i] == null) break;
       }
-      _corrupted[i] = _wrongs[i];
+      _noise[i] = _noisesrc[i];
       left--;
       n--;
     }
   }
 
-  public function hitCorruption(i:int):Boolean
+  public function hitNoise(i:int):Boolean
   {
-    var b:Boolean = (_corrupted[i] != null);
-    _corrupted[i] = null;
+    var b:Boolean = (_noise[i] != null);
+    _noise[i] = null;
     return b;
   }
 
   public function get numNotes():int
   {
-    return _notes.length;
+    return _tune.length;
   }
 
   public function getNote(i:int):String
   {
-    var note:String = _corrupted[i];
+    var note:String = _noise[i];
     if (note == null) {
-      note = _notes[i];
+      note = _tune[i];
     }
     return note;
   }
 
   public function getColor(i:int):uint
   {
-    if (_corrupted[i] != null) {
+    if (_noise[i] != null) {
       return 0x444444;
     }
-    switch (_notes[i].charAt(0)) {
+    switch (_tune[i].charAt(0)) {
     case "C": return 0xff0000;
     case "D": return 0x00cc00;
     case "E": return 0x0022ff;
@@ -335,6 +372,7 @@ class Arpeggio extends Object
 // 
 class Status extends Sprite
 {
+  public var level:int;
   public var score:int;
   public var miss:int;
 
@@ -342,13 +380,14 @@ class Status extends Sprite
 
   public function Status()
   {
-    _text = Font.createText("SCORE: 00   MISS: 00", 0xffffff, 0, 2);
+    _text = Font.createText("LEVEL: 00   SCORE: 00   MISS: 00", 0xffffff, 0, 2);
     addChild(_text);
   }
 
   public function update():void
   {
-    var text:String = "SCORE: "+Utils.format(score,2);
+    var text:String = "LEVEL: "+Utils.format(level,2);
+    text += "   SCORE: "+Utils.format(score,2);
     text += "   MISS: "+Utils.format(miss,2);
     Font.renderText(_text.bitmapData, text);
   }

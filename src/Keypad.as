@@ -84,6 +84,11 @@ public class Keypad extends Sprite
 	removeChild(key);
       }
     }
+
+    for each (var part:Particle in _particles) {
+      removeChild(part);
+    }
+    _particles = new Array();
   }
 
   public function layoutFull(kw:int=32, kh:int=32, margin:int=4):void
