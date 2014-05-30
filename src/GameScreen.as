@@ -89,10 +89,11 @@ public class GameScreen extends Screen
     }
 
     graphics.clear();
+    drawBand(_ticks);
+    drawBand(_ticks+3);
     graphics.lineStyle(0, Keytop.BORDER_COLOR);
     graphics.moveTo(0, screenHeight/2);
     graphics.lineTo(screenWidth, screenHeight/2);
-    drawBackground((_ticks % 20)-16);
 
     _keypad.update();
     _ticks++;
@@ -147,7 +148,7 @@ public class GameScreen extends Screen
 
     _arpeggio.setTune(Arpeggio.PAT0, Arpeggio.WRONG0);
     _keypad.clear();
-    _keypad.layoutLine(_arpeggio.numNotes, screenWidth-200);
+    _keypad.layoutLine(_arpeggio.numNotes, screenWidth/2);
     _keypad.x = (screenWidth-_keypad.rect.width)/2;
     _keypad.y = (screenHeight-_keypad.rect.height)/2;
     _repeat = 0;
@@ -176,25 +177,32 @@ public class GameScreen extends Screen
     }
   }
 
-  private const vx:int = 12;
-  private const vy:int = 4;
-  private function drawBackground(t:int):void
+  private function drawBand(t:int):void
   {
+    t = 30-(t % 30);
     var r:Rectangle = _keypad.rect;
-    var y0:int = screenHeight/2;
-    var t0:Number = 20/(4-t);
-    var t1:Number = 20/(4.5-t);
-    if (t < 0) { 
-      var h:Number = screenHeight*t1/20;
-      graphics.lineStyle(0, 0x666666);
-      graphics.drawRect(r.left-vx*t1, y0-h,
-			r.width+2*vx*t1, h);
-    } else if (t < 4) {
-      graphics.beginFill(0x666666);
-      graphics.moveTo(r.left-vx*t0, y0+vy*t0);
-      graphics.lineTo(r.left-vx*t1, y0+vy*t1);
-      graphics.lineTo(r.right+vx*t1, y0+vy*t1);
-      graphics.lineTo(r.right+vx*t0, y0+vy*t0);
+    var cx:int = screenWidth/2;
+    var cy:int = screenHeight/2;
+    var dx0:Number = screenWidth*2/t;
+    var dy0:Number = screenHeight/2/t;
+    var dx1:Number = screenWidth*2/(t+0.5);
+    var dy1:Number = screenHeight/2/(t+0.5);
+    graphics.lineStyle(0);
+    graphics.beginFill(0x333333);
+    if ((screenWidth*3/r.width) < t) {
+      graphics.moveTo(cx-dx1, cy);
+      graphics.lineTo(cx-dx0, cy);
+      graphics.lineTo(cx-dx0, cy-dy0*2);
+      graphics.lineTo(cx+dx0, cy-dy0*2);
+      graphics.lineTo(cx+dx0, cy);
+      graphics.lineTo(cx+dx1, cy);
+      graphics.lineTo(cx+dx1, cy-dy1*2);
+      graphics.lineTo(cx-dx1, cy-dy1*2);
+    } else {
+      graphics.moveTo(cx-dx1, cy+dy1);
+      graphics.lineTo(cx-dx0, cy+dy0);
+      graphics.lineTo(cx+dx0, cy+dy0);
+      graphics.lineTo(cx+dx1, cy+dy1);
     }
   }
 }
