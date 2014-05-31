@@ -20,16 +20,19 @@ public class GameScreen extends Screen
   private static const NextSoundCls:Class;
   private const nextSound:Sound = new NextSoundCls();
 
+  private const MAX_MISS:int = 3;
+
   private var _status:Status;
   private var _arpeggio:Arpeggio;
   private var _keypad:Keypad;
+
+  private var _repeat:int;
+  private var _noteleft:int;
 
   private var _start:int;
   private var _ticks:int;
   private var _interval:int;
   private var _nextnote:int;
-  private var _repeat:int;
-  private var _maxrepeat:int;
 
   public function GameScreen(width:int, height:int)
   {
@@ -128,11 +131,15 @@ public class GameScreen extends Screen
 	key.highlight(0xffffff);
 	_status.score++;
 	_status.update();
+	_noteleft--;
       } else {
 	wrongSound.play(0, 0, new SoundTransform(1.0, pan));
 	key.highlight(0);
 	_status.miss++;
 	_status.update();
+	if (MAX_MISS < _status.miss) {
+	  gameOver();
+	}
       }
     }
   }
@@ -150,6 +157,9 @@ public class GameScreen extends Screen
   {
     _nextnote++;
     if (_arpeggio.numNotes <= _nextnote) {
+      if (_repeat == 0) {
+	_start = _ticks+15;
+      }
       _repeat++;
       setupNoise();
     }
@@ -159,23 +169,29 @@ public class GameScreen extends Screen
   {
     _nextnote = 0;
 
-    if (_repeat < 3) {
-      // Play first twice for free.
-
-    } else if (_repeat-3 < _maxrepeat) {
-      // Add noise.
-      switch (_status.level) {
-      case 0:
-      case 1:
-	_arpeggio.addNoise((((_repeat-3) % 2) == 0)? 1 : 0);
-	break;
-      }
-
-    } else {
+    if (_noteleft == 0) {
       // Next level.
       _status.level++;
       _status.update();
       setupLevel();
+
+    } else if (_repeat < 3) {
+      // Play first twice for free.
+
+    } else {
+      // Add noise.
+      var i:int = (_repeat-3);
+      var n:int = 0;
+      switch (_status.level) {
+      case 0:
+      case 1:
+	n = ((i % 2) == 0)? 1 : 0;
+	break;
+      }
+      n = Math.min(n, _noteleft);
+      if (!_arpeggio.addNoise(n)) {
+	gameOver();
+      }
     }
   }
 
@@ -186,13 +202,13 @@ public class GameScreen extends Screen
     case 0:
       _arpeggio.setTune(Arpeggio.TUNE0, Arpeggio.NOISE0);
       _interval = 10;
-      _maxrepeat = 3;
+      _noteleft = 4;
       break;
 
     case 1:
       _arpeggio.setTune(Arpeggio.TUNE1, Arpeggio.NOISE1);
       _interval = 8;
-      _maxrepeat = 5;
+      _noteleft = 6;
       break;
 
     }
@@ -206,6 +222,10 @@ public class GameScreen extends Screen
 
     nextSound.play();
     _arpeggio.playNote(0, 0, 0.5, 2.0);
+  }
+
+  private function gameOver():void
+  {
   }
 
   private function drawBand(t:int):void
@@ -263,11 +283,17 @@ class Arpeggio extends Object
   public static const TUNE2:String = "C4 G3 D4 G4 E4 G4";
   public static const NOISE2:String = "B3 D4s C4s F4s D4s C4s";
 
+  public static const TUNE3:String = "C4 A3 D4s A3 F4 G3s";
+  public static const NOISE3:String = "B3 D4s C4s F4s D4s C4s";
+
   public static const TUNE4:String = "C5 G4 F4 G4 C5 G4 E4 G4";
   public static const NOISE4:String = "C4s C5s D4s A3s F4s G4s A4s";
 
-  public static const TUNE5:String = "D5s A4 F4s A4 D5s A4 F4 A4";
-  public static const TUNE6:String = "A4 A5 E5 F5 A5 E5 F5 A5";
+  public static const TUNE5:String = "G3 C4 E4 G3 E4 G3 E4 G3";
+
+  public static const TUNE6:String = "D5s A4 F4s A4 D5s A4 F4 A4";
+
+  public static const TUNE7:String = "A4 A5 E5 F5 A5 E5 F5 A5";
 
   public var volume:Number = 0.1;
 
@@ -294,7 +320,7 @@ class Arpeggio extends Object
     }
   }
 
-  public function addNoise(n:int):void
+  public function addNoise(n:int):Boolean
   {
     var left:int = 0;
     var i:int;
@@ -303,7 +329,8 @@ class Arpeggio extends Object
 	left++;
       }
     }
-    while (0 < n && 0 < left) {
+    while (0 < n) {
+      if (left == 0) return false;
       while (true) {
 	i = Utils.rnd(_tune.length);
 	if (_noise[i] == null) break;
@@ -312,6 +339,7 @@ class Arpeggio extends Object
       left--;
       n--;
     }
+    return true;
   }
 
   public function hitNoise(i:int):Boolean
