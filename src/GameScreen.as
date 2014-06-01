@@ -20,8 +20,37 @@ public class GameScreen extends Screen
   private static const NextSoundCls:Class;
   private const nextSound:Sound = new NextSoundCls();
 
+  private const START_LEVEL:int = 0;
   private const MAX_MISS:int = 3;
   private const PAUSE:int = 15;
+
+  public const TUNES:Array = 
+    [
+     // 0
+     new Tune("C4 G4 E4 G4", 
+	      "B3 A4s C4s C5s"),
+     // 1
+     new Tune("F4 C4 A4 C5",
+	      "G4 B3 C5s D5s"),
+     // 2
+     new Tune("C4 G3 D4 G4 E4 G4",
+	      "B3 D4s C4s F4s D4s C4s"),
+     // 3
+     new Tune("C4 A3 D4s A3 F4 G3s",
+	      "B3 F3 D4 G3s A4s F3s"),
+     // 4
+     new Tune("C5 G4 F4 G4 C5 G4 E4 G4",
+	      "C4s C5s D4s A4 B3 D4 F4 C5s"),
+     // 5
+     new Tune("G3 C4 E4 G3 E4 G3 E4 G3",
+	      "C4 G4s A3 F4s G4 C3s A4 C4"),
+     // 6
+     new Tune("D5s A4 F4s A4 D5s A4 F4 A4",
+	      "E4 C4s E4 C4s G4s F4 G4s F4"),
+     // 7
+     new Tune("A4 A5 E5 F5 A5 E5 F5 A5",
+	      "C4 D4 E4 F4 G4 A4 B4 C5"),
+     ];
 
   private var _status:Status;
   private var _guide:Guide;
@@ -239,7 +268,8 @@ public class GameScreen extends Screen
 	n = 1;
 	break;
       }
-      n = Math.min(n, _noteleft);
+      n = Math.min(n, _noteleft-_arpeggio.numNoises);
+      trace("setupNose: i="+i+", n="+n);
       if (!_arpeggio.addNoise(n)) {
 	gameOver();
       }
@@ -249,10 +279,12 @@ public class GameScreen extends Screen
   private function setupLevel():void
   {
     // Setup a new tune.
-    if (!_arpeggio.setTune(_status.level)) {
+    if (TUNES.length <= _status.level) {
       finishGame();
       return
     }
+
+    _arpeggio.setTune(TUNES[_status.level]);
 
     switch (_status.level) {
     case 0:
@@ -270,16 +302,28 @@ public class GameScreen extends Screen
       break;
 
     case 2:
+    case 3:
       _interval = 8;
+      _noteleft = 8;
+      break;
+
+    case 4:
+    case 5:
+      _interval = 6;
       _noteleft = 10;
       break;
 
+    case 6:
+    case 7:
     default:
-      _interval = 6;
-      _noteleft = 12;
+      _interval = 4;
+      _noteleft = 10;
       break;
 
     }
+    trace("setupLevel: level="+_status.level+
+	  ", interval="+_interval+
+	  ", noteleft="+_noteleft);
 
     _keypad.clear();
     _keypad.layoutLine(_arpeggio.numNotes, screenWidth/2);
@@ -299,7 +343,7 @@ public class GameScreen extends Screen
 
   private function initGame():void
   {
-    _status.level = 4;
+    _status.level = START_LEVEL;
     _status.score = 0;
     _status.update();
 
@@ -335,6 +379,8 @@ import flash.media.SoundChannel;
 import baseui.Font;
 
 
+//  Tune
+// 
 class Tune extends Object
 {
   public var notes:Array;
@@ -347,38 +393,11 @@ class Tune extends Object
   }
 }
 
+
 //  Arpeggio
 // 
 class Arpeggio extends Object
 {
-  public static const TUNES:Array = 
-    [
-     // 0
-     new Tune("C4 G4 E4 G4", 
-	      "B3 A4s C4s C5s"),
-     // 1
-     new Tune("F4 C4 A4 C5",
-	      "G4 B3 C5s D5s"),
-     // 2
-     new Tune("C4 G3 D4 G4 E4 G4",
-	      "B3 D4s C4s F4s D4s C4s"),
-     // 3
-     new Tune("C4 A3 D4s A3 F4 G3s",
-	      "B3 D4s C4s F4s D4s C4s"),
-     // 4
-     new Tune("C5 G4 F4 G4 C5 G4 E4 G4",
-	      "C4s C5s D4s A3s F4s G4s A4s"),
-     // 5
-     new Tune("G3 C4 E4 G3 E4 G3 E4 G3",
-	      "G3 C4 E4 G3 E4 G3 E4 G3"),
-     // 6
-     new Tune("D5s A4 F4s A4 D5s A4 F4 A4",
-	      "D5s A4 F4s A4 D5s A4 F4 A4"),
-     // 7
-     new Tune("A4 A5 E5 F5 A5 E5 F5 A5",
-	      "C4 D4 E4 F4 G4 A4 B4 C5"),
-     ];
-
   public var volume:Number = 0.1;
 
   private var _tune:Tune;
@@ -388,12 +407,10 @@ class Arpeggio extends Object
   {
   }
 
-  public function setTune(level:int):Boolean
+  public function setTune(tune:Tune):void
   {
-    if (TUNES.length <= level) return false;
-    _tune = TUNES[level];
+    _tune = tune;
     clearNoise();
-    return true;
   }
   
   public function clearNoise():void
@@ -406,17 +423,11 @@ class Arpeggio extends Object
 
   public function addNoise(n:int):Boolean
   {
-    var left:int = 0;
-    var i:int;
-    for (i = 0; i < _noise.length; i++) {
-      if (_noise[i] == null) {
-	left++;
-      }
-    }
+    var left:int = _noise.length - numNoises;
     while (0 < n) {
       if (left == 0) return false;
       while (true) {
-	i = Utils.rnd(_tune.notes.length);
+	var i:int = Utils.rnd(_noise.length);
 	if (_noise[i] == null) break;
       }
       _noise[i] = _tune.noises[i];
@@ -431,6 +442,17 @@ class Arpeggio extends Object
     var b:Boolean = (_noise[i] != null);
     _noise[i] = null;
     return b;
+  }
+
+  public function get numNoises():int
+  {
+    var n:int = 0;
+    for (var i:int = 0; i < _noise.length; i++) {
+      if (_noise[i] != null) {
+	n++;
+      }
+    }
+    return n;
   }
 
   public function get numNotes():int
