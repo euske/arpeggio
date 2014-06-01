@@ -21,11 +21,14 @@ public class GameScreen extends Screen
   private const nextSound:Sound = new NextSoundCls();
 
   private const MAX_MISS:int = 3;
+  private const PAUSE:int = 15;
 
   private var _status:Status;
+  private var _guide:Guide;
   private var _arpeggio:Arpeggio;
   private var _keypad:Keypad;
 
+  private var _tutorial:Boolean;
   private var _repeat:int;
   private var _noteleft:int;
 
@@ -38,6 +41,8 @@ public class GameScreen extends Screen
   {
     super(width, height);
 
+    _arpeggio = new Arpeggio();
+
     _status = new Status();
     _status.x = (width-_status.width)/2;
     _status.y = (height-_status.height-16);
@@ -47,20 +52,23 @@ public class GameScreen extends Screen
     _keypad.addEventListener(KeypadEvent.PRESSED, onKeypadPressed);
     addChild(_keypad);
 
-    _arpeggio = new Arpeggio();
+    _guide = new Guide(width*3/4, height/2);
+    _guide.x = (width-_guide.width)/2;
+    _guide.y = (height-_guide.height)/2;
+    addChild(_guide);
+
   }
 
   // open()
   public override function open():void
   {
-    _status.level = 0;
-    _status.score = 0;
-    _status.miss = 0;
-    _status.update();
-
     _ticks = 0;
     _start = 0;
-    setupLevel();
+
+    _tutorial = true;
+    _guide.show("ARPEGGIO", 
+		"PRESS KEYS IN A CERTAIN ROW\nFROM LEFT TO RIGHT.");
+    initGame();
   }
 
   // close()
@@ -91,9 +99,10 @@ public class GameScreen extends Screen
       }
     }
 
+    var n:int = _interval*2;
     graphics.clear();
-    drawBand(_ticks);
-    drawBand(_ticks+3);
+    drawBand(n-(_ticks % n));
+    drawBand(n-((_ticks+3) % n));
     graphics.lineStyle(0, Keytop.BORDER_COLOR);
     graphics.moveTo(0, screenHeight/2);
     graphics.lineTo(screenWidth, screenHeight/2);
@@ -105,12 +114,42 @@ public class GameScreen extends Screen
   // keydown(keycode)
   public override function keydown(keycode:int):void
   {
+    _guide.hide();
     _keypad.keydown(keycode);
   }
 
   // keyup(keycode)
   public override function keyup(keycode:int):void 
   {
+  }
+
+  private function drawBand(t:int):void
+  {
+    var r:Rectangle = _keypad.rect;
+    var cx:int = screenWidth/2;
+    var cy:int = screenHeight/2;
+    var dx0:Number = screenWidth*2/t;
+    var dy0:Number = screenHeight/2/t;
+    var dx1:Number = screenWidth*2/(t+0.5);
+    var dy1:Number = screenHeight/2/(t+0.5);
+    graphics.lineStyle(0, 0);
+    graphics.beginFill(0x333333);
+
+    graphics.moveTo(cx-dx1, cy);
+    graphics.lineTo(cx-dx0, cy);
+    graphics.lineTo(cx-dx0, cy-dy0*2);
+    graphics.lineTo(cx+dx0, cy-dy0*2);
+    graphics.lineTo(cx+dx0, cy);
+    graphics.lineTo(cx+dx1, cy);
+    graphics.lineTo(cx+dx1, cy-dy1*2);
+    graphics.lineTo(cx-dx1, cy-dy1*2);
+
+    if (t < (screenWidth*3/r.width)) {
+      graphics.moveTo(cx-dx1, cy+dy1);
+      graphics.lineTo(cx-dx0, cy+dy0);
+      graphics.lineTo(cx+dx0, cy+dy0);
+      graphics.lineTo(cx+dx1, cy+dy1);
+    }
   }
 
   private function onKeypadPressed(e:KeypadEvent):void
@@ -158,7 +197,10 @@ public class GameScreen extends Screen
     _nextnote++;
     if (_arpeggio.numNotes <= _nextnote) {
       if (_repeat == 0) {
-	_start = _ticks+15;
+	if (_tutorial && _status.level == 0) {
+	  _guide.show(null, "TRY TO SPOT WRONG NOTE\nBY PRESSING KEY.");
+	}
+	_start = _ticks+PAUSE;
       }
       _repeat++;
       setupNoise();
@@ -184,8 +226,17 @@ public class GameScreen extends Screen
       var n:int = 0;
       switch (_status.level) {
       case 0:
-      case 1:
+      case 2:
 	n = ((i % 2) == 0)? 1 : 0;
+	break;
+
+      case 6:
+      case 7:
+	n = 2;
+	break;
+
+      default:
+	n = 1;
 	break;
       }
       n = Math.min(n, _noteleft);
@@ -198,17 +249,34 @@ public class GameScreen extends Screen
   private function setupLevel():void
   {
     // Setup a new tune.
+    if (!_arpeggio.setTune(_status.level)) {
+      finishGame();
+      return
+    }
+
     switch (_status.level) {
     case 0:
-      _arpeggio.setTune(Arpeggio.TUNE0, Arpeggio.NOISE0);
       _interval = 10;
       _noteleft = 4;
       break;
 
     case 1:
-      _arpeggio.setTune(Arpeggio.TUNE1, Arpeggio.NOISE1);
       _interval = 8;
       _noteleft = 6;
+      if (_tutorial) {
+	_tutorial = false;
+	_guide.show(null, "DIFFICULTY IS INCREASED.\nPRESS KEYS AGAIN.");
+      }
+      break;
+
+    case 2:
+      _interval = 8;
+      _noteleft = 10;
+      break;
+
+    default:
+      _interval = 6;
+      _noteleft = 12;
       break;
 
     }
@@ -222,39 +290,36 @@ public class GameScreen extends Screen
 
     nextSound.play();
     _arpeggio.playNote(0, 0, 0.5, 2.0);
+
+    _status.miss = 0;
+    _status.update();
+    
+    _start = _ticks+PAUSE;
+  }
+
+  private function initGame():void
+  {
+    _status.level = 4;
+    _status.score = 0;
+    _status.update();
+
+    setupLevel();
   }
 
   private function gameOver():void
   {
+    _guide.show("GAME OVER", 
+		"PRESS KEYS TO PLAY AGAIN.");
+    _start = _ticks+PAUSE;
+    initGame();
   }
 
-  private function drawBand(t:int):void
+  private function finishGame():void
   {
-    t = 30-(t % 30);
-    var r:Rectangle = _keypad.rect;
-    var cx:int = screenWidth/2;
-    var cy:int = screenHeight/2;
-    var dx0:Number = screenWidth*2/t;
-    var dy0:Number = screenHeight/2/t;
-    var dx1:Number = screenWidth*2/(t+0.5);
-    var dy1:Number = screenHeight/2/(t+0.5);
-    graphics.lineStyle(0);
-    graphics.beginFill(0x333333);
-    if ((screenWidth*3/r.width) < t) {
-      graphics.moveTo(cx-dx1, cy);
-      graphics.lineTo(cx-dx0, cy);
-      graphics.lineTo(cx-dx0, cy-dy0*2);
-      graphics.lineTo(cx+dx0, cy-dy0*2);
-      graphics.lineTo(cx+dx0, cy);
-      graphics.lineTo(cx+dx1, cy);
-      graphics.lineTo(cx+dx1, cy-dy1*2);
-      graphics.lineTo(cx-dx1, cy-dy1*2);
-    } else {
-      graphics.moveTo(cx-dx1, cy+dy1);
-      graphics.lineTo(cx-dx0, cy+dy0);
-      graphics.lineTo(cx+dx0, cy+dy0);
-      graphics.lineTo(cx+dx1, cy+dy1);
-    }
+    _guide.show("CONGRATULATIONS!", 
+		"YOU BEAT THE GAME.");
+    _start = _ticks+PAUSE;
+    initGame();
   }
 }
 
@@ -270,51 +335,70 @@ import flash.media.SoundChannel;
 import baseui.Font;
 
 
+class Tune extends Object
+{
+  public var notes:Array;
+  public var noises:Array;
+  
+  public function Tune(notes:String, noises:String)
+  {
+    this.notes = notes.split(/ /);
+    this.noises = noises.split(/ /);
+  }
+}
+
 //  Arpeggio
 // 
 class Arpeggio extends Object
 {
-  public static const TUNE0:String = "C4 G4 E4 G4";
-  public static const NOISE0:String = "B3 A4s C4s C5s";
-
-  public static const TUNE1:String = "F4 C4 A4 C5";
-  public static const NOISE1:String = "G4 B3 C5s D5s";
-  
-  public static const TUNE2:String = "C4 G3 D4 G4 E4 G4";
-  public static const NOISE2:String = "B3 D4s C4s F4s D4s C4s";
-
-  public static const TUNE3:String = "C4 A3 D4s A3 F4 G3s";
-  public static const NOISE3:String = "B3 D4s C4s F4s D4s C4s";
-
-  public static const TUNE4:String = "C5 G4 F4 G4 C5 G4 E4 G4";
-  public static const NOISE4:String = "C4s C5s D4s A3s F4s G4s A4s";
-
-  public static const TUNE5:String = "G3 C4 E4 G3 E4 G3 E4 G3";
-
-  public static const TUNE6:String = "D5s A4 F4s A4 D5s A4 F4 A4";
-
-  public static const TUNE7:String = "A4 A5 E5 F5 A5 E5 F5 A5";
+  public static const TUNES:Array = 
+    [
+     // 0
+     new Tune("C4 G4 E4 G4", 
+	      "B3 A4s C4s C5s"),
+     // 1
+     new Tune("F4 C4 A4 C5",
+	      "G4 B3 C5s D5s"),
+     // 2
+     new Tune("C4 G3 D4 G4 E4 G4",
+	      "B3 D4s C4s F4s D4s C4s"),
+     // 3
+     new Tune("C4 A3 D4s A3 F4 G3s",
+	      "B3 D4s C4s F4s D4s C4s"),
+     // 4
+     new Tune("C5 G4 F4 G4 C5 G4 E4 G4",
+	      "C4s C5s D4s A3s F4s G4s A4s"),
+     // 5
+     new Tune("G3 C4 E4 G3 E4 G3 E4 G3",
+	      "G3 C4 E4 G3 E4 G3 E4 G3"),
+     // 6
+     new Tune("D5s A4 F4s A4 D5s A4 F4 A4",
+	      "D5s A4 F4s A4 D5s A4 F4 A4"),
+     // 7
+     new Tune("A4 A5 E5 F5 A5 E5 F5 A5",
+	      "C4 D4 E4 F4 G4 A4 B4 C5"),
+     ];
 
   public var volume:Number = 0.1;
 
-  private var _tune:Array;
-  private var _noisesrc:Array;
+  private var _tune:Tune;
   private var _noise:Array;
 
   public function Arpeggio()
   {
   }
 
-  public function setTune(tune:String, noisesrc:String):void
+  public function setTune(level:int):Boolean
   {
-    _tune = tune.split(/ /);
-    _noisesrc = noisesrc.split(/ /);
+    if (TUNES.length <= level) return false;
+    _tune = TUNES[level];
     clearNoise();
+    return true;
   }
   
   public function clearNoise():void
   {
-    _noise = new Array(_tune.length);
+    _noise = new Array(_tune.notes.length);
     for (var i:int = 0; i < _noise.length; i++) {
       _noise[i] = null;
     }
@@ -332,10 +416,10 @@ class Arpeggio extends Object
     while (0 < n) {
       if (left == 0) return false;
       while (true) {
-	i = Utils.rnd(_tune.length);
+	i = Utils.rnd(_tune.notes.length);
 	if (_noise[i] == null) break;
       }
-      _noise[i] = _noisesrc[i];
+      _noise[i] = _tune.noises[i];
       left--;
       n--;
     }
@@ -351,14 +435,14 @@ class Arpeggio extends Object
 
   public function get numNotes():int
   {
-    return _tune.length;
+    return _tune.notes.length;
   }
 
   public function getNote(i:int):String
   {
     var note:String = _noise[i];
     if (note == null) {
-      note = _tune[i];
+      note = _tune.notes[i];
     }
     return note;
   }
@@ -368,7 +452,7 @@ class Arpeggio extends Object
     if (_noise[i] != null) {
       return 0x444444;
     }
-    switch (_tune[i].charAt(0)) {
+    switch (_tune.notes[i].charAt(0)) {
     case "C": return 0xff0000;
     case "D": return 0x00cc00;
     case "E": return 0x0022ff;
@@ -422,8 +506,66 @@ class Status extends Sprite
 }
 
 
-//  Overlay
+//  Guide
 // 
-class Overlay extends Sprite
+class Guide extends Sprite
 {
+  public const MARGIN:int = 16;
+
+  private var _title:Bitmap;
+  private var _text:Bitmap;
+  private var _channel:SoundChannel;
+
+  public function Guide(width:int, height:int)
+  {
+    graphics.beginFill(0, 0.2);
+    graphics.drawRect(0, 0, width, height);
+  }
+
+  public function set title(v:String):void
+  {
+    if (_title != null) {
+      removeChild(_title);
+      _title = null;
+    }
+    if (v != null) {
+      _title = Font.createText(v, 0xffffff, 0, 2);
+      _title.x = (width-_title.width)/2;
+      _title.y = MARGIN;
+      addChild(_title);
+    }
+  }
+
+  public function set text(v:String):void
+  {
+    if (_text != null) {
+      removeChild(_text);
+      _text = null;
+    }
+    if (v != null) {
+      _text = Font.createText(v, 0xffffff, 2, 2);
+      _text.x = (width-_text.width)/2;
+      _text.y = (height-_text.height-MARGIN);
+      addChild(_text);
+    }
+  }
+
+  public function show(title:String=null, text:String=null, sound:Sound=null):void
+  {
+    this.title = title;
+    this.text = text;
+    if (sound != null) {
+      _channel = sound.play();
+    }
+    visible = true;
+  }
+
+  public function hide():void
+  {
+    if (_channel != null) {
+      _channel.stop();
+      _channel = null;
+    }
+    visible = false;
+  }
 }
