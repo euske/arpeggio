@@ -20,9 +20,25 @@ public class GameScreen extends Screen
   private static const NextSoundCls:Class;
   private const nextSound:Sound = new NextSoundCls();
 
+  [Embed(source="../assets/guides/welcome.mp3", mimeType="audio/mpeg")]
+  private static const WelcomeSoundCls:Class;
+  private const welcomeSound:Sound = new WelcomeSoundCls();
+  [Embed(source="../assets/guides/guide1.mp3", mimeType="audio/mpeg")]
+  private static const Guide1SoundCls:Class;
+  private const guide1Sound:Sound = new Guide1SoundCls();
+  [Embed(source="../assets/guides/guide2.mp3", mimeType="audio/mpeg")]
+  private static const Guide2SoundCls:Class;
+  private const guide2Sound:Sound = new Guide2SoundCls();
+  [Embed(source="../assets/guides/gameover.mp3", mimeType="audio/mpeg")]
+  private static const GameOverSoundCls:Class;
+  private const gameOverSound:Sound = new GameOverSoundCls();
+  [Embed(source="../assets/guides/finish.mp3", mimeType="audio/mpeg")]
+  private static const FinishSoundCls:Class;
+  private const finishSound:Sound = new FinishSoundCls();
+
   private const START_LEVEL:int = 0;
   private const MAX_MISS:int = 3;
-  private const PAUSE:int = 15;
+  private const DELAY:int = 15;
 
   public const TUNES:Array = 
     [
@@ -31,16 +47,16 @@ public class GameScreen extends Screen
 	      "B3 A4s C4s C5s"),
      // 1
      new Tune("F4 C4 A4 C5",
-	      "G4 B3 C5s D5s"),
+	      "G4 A3s C5s D5s"),
      // 2
      new Tune("C4 G3 D4 G4 E4 G4",
 	      "B3 D4s C4s F4s D4s C4s"),
      // 3
      new Tune("C4 A3 D4s A3 F4 G3s",
-	      "B3 F3 D4 G3s A4s F3s"),
+	      "A3 F3s B3 E3 A4s F3s"),
      // 4
      new Tune("C5 G4 F4 G4 C5 G4 E4 G4",
-	      "C4s C5s D4s A4 B3 D4 F4 C5s"),
+	      "C4s C5s D4s A4 B3 D4 F3 C5s"),
      // 5
      new Tune("G3 C4 E4 G3 E4 G3 E4 G3",
 	      "C4 G4s A3 F4s G4 C3s A4 C4"),
@@ -96,7 +112,8 @@ public class GameScreen extends Screen
 
     _tutorial = true;
     _guide.show("ARPEGGIO", 
-		"PRESS KEYS IN A CERTAIN ROW\nFROM LEFT TO RIGHT.");
+		"PRESS KEYS IN A CERTAIN ROW\nFROM LEFT TO RIGHT.",
+		welcomeSound);
     initGame();
   }
 
@@ -136,6 +153,7 @@ public class GameScreen extends Screen
     graphics.moveTo(0, screenHeight/2);
     graphics.lineTo(screenWidth, screenHeight/2);
 
+    _guide.update();
     _keypad.update();
     _ticks++;
   }
@@ -227,9 +245,10 @@ public class GameScreen extends Screen
     if (_arpeggio.numNotes <= _nextnote) {
       if (_repeat == 0) {
 	if (_tutorial && _status.level == 0) {
-	  _guide.show(null, "TRY TO SPOT WRONG NOTE\nBY PRESSING KEY.");
+	  _guide.show(null, "TRY TO SPOT WRONG NOTE\nBY PRESSING KEY.",
+		      guide1Sound);
 	}
-	_start = _ticks+PAUSE;
+	_start = _ticks+DELAY;
       }
       _repeat++;
       setupNoise();
@@ -259,7 +278,7 @@ public class GameScreen extends Screen
 	n = ((i % 2) == 0)? 1 : 0;
 	break;
 
-      case 6:
+      case 5:
       case 7:
 	n = 2;
 	break;
@@ -297,7 +316,8 @@ public class GameScreen extends Screen
       _noteleft = 6;
       if (_tutorial) {
 	_tutorial = false;
-	_guide.show(null, "DIFFICULTY IS INCREASED.\nPRESS KEYS AGAIN.");
+	_guide.show(null, "DIFFICULTY IS INCREASED.\nPRESS KEYS AGAIN.",
+		    guide2Sound);
       }
       break;
 
@@ -338,7 +358,7 @@ public class GameScreen extends Screen
     _status.miss = 0;
     _status.update();
     
-    _start = _ticks+PAUSE;
+    _start = _ticks+DELAY;
   }
 
   private function initGame():void
@@ -353,16 +373,18 @@ public class GameScreen extends Screen
   private function gameOver():void
   {
     _guide.show("GAME OVER", 
-		"PRESS KEYS TO PLAY AGAIN.");
-    _start = _ticks+PAUSE;
+		"PRESS KEY TO PLAY AGAIN.",
+		gameOverSound);
+    _start = _ticks+DELAY;
     initGame();
   }
 
   private function finishGame():void
   {
     _guide.show("CONGRATULATIONS!", 
-		"YOU BEAT THE GAME.");
-    _start = _ticks+PAUSE;
+		"YOU BEAT THE GAME.",
+		finishSound);
+    _start = _ticks+DELAY;
     initGame();
   }
 }
@@ -536,7 +558,9 @@ class Guide extends Sprite
 
   private var _title:Bitmap;
   private var _text:Bitmap;
+  private var _sound:Sound;
   private var _channel:SoundChannel;
+  private var _count:int;
 
   public function Guide(width:int, height:int)
   {
@@ -572,13 +596,13 @@ class Guide extends Sprite
     }
   }
 
-  public function show(title:String=null, text:String=null, sound:Sound=null):void
+  public function show(title:String=null, text:String=null, 
+		       sound:Sound=null, delay:int=30):void
   {
     this.title = title;
     this.text = text;
-    if (sound != null) {
-      _channel = sound.play();
-    }
+    _sound = sound;
+    _count = delay;
     visible = true;
   }
 
@@ -589,5 +613,17 @@ class Guide extends Sprite
       _channel = null;
     }
     visible = false;
+  }
+
+  public function update():void
+  {
+    if (_count != 0) {
+      _count--;
+    } else {
+      if (_sound != null) {
+	_channel = _sound.play();
+	_sound = null;
+      }
+    }
   }
 }

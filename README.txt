@@ -1,9 +1,17 @@
-ascs (ActionScript Cheat Sheet)
+Arpeggio
 README.txt
 
-A minimalistic framework for making games.
-
 Author: euske (Yusuke Shinyama)
+
+
+--
+Narration:
+ "Arpeggio. Press the keys in a certain row from left to right."
+ "Try to spot a wrong note by pressing the key."
+ "Now the difficulty is increased. Press the keys again."
+ "The Game is over. Press a key to play again."
+ "Congratulations. You beat the game."
+
 
 --
 How to run:
