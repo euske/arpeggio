@@ -14,12 +14,21 @@ public class GameScreen extends Screen
   [Embed(source="../assets/correct.mp3", mimeType="audio/mpeg")]
   private static const CorrectSoundCls:Class;
   private const correctSound:Sound = new CorrectSoundCls();
-  [Embed(source="../assets/wrong.mp3", mimeType="audio/mpeg")]
-  private static const WrongSoundCls:Class;
-  private const wrongSound:Sound = new WrongSoundCls();
   [Embed(source="../assets/next.mp3", mimeType="audio/mpeg")]
   private static const NextSoundCls:Class;
   private const nextSound:Sound = new NextSoundCls();
+  [Embed(source="../assets/wrong1.mp3", mimeType="audio/mpeg")]
+  private static const Wrong1SoundCls:Class;
+  private const wrong1Sound:Sound = new Wrong1SoundCls();
+  [Embed(source="../assets/wrong2.mp3", mimeType="audio/mpeg")]
+  private static const Wrong2SoundCls:Class;
+  private const wrong2Sound:Sound = new Wrong2SoundCls();
+  [Embed(source="../assets/wrong3.mp3", mimeType="audio/mpeg")]
+  private static const Wrong3SoundCls:Class;
+  private const wrong3Sound:Sound = new Wrong3SoundCls();
+  [Embed(source="../assets/bang.mp3", mimeType="audio/mpeg")]
+  private static const BangSoundCls:Class;
+  private const bangSound:Sound = new BangSoundCls();
 
   [Embed(source="../assets/guides/welcome.mp3", mimeType="audio/mpeg")]
   private static const WelcomeSoundCls:Class;
@@ -37,8 +46,8 @@ public class GameScreen extends Screen
   private static const FinishSoundCls:Class;
   private const finishSound:Sound = new FinishSoundCls();
 
+  private const MISS_SOUND:Array = [ wrong1Sound, wrong2Sound, wrong3Sound, bangSound ];
   private const START_LEVEL:int = 0;
-  private const MAX_MISS:int = 3;
   private const DELAY:int = 15;
   private const VOLUME:Number = 0.1;
 
@@ -232,12 +241,13 @@ public class GameScreen extends Screen
 	_status.update();
 	_noteleft--;
       } else {
-	wrongSound.play(0, 0, new SoundTransform(1.0, pan));
+	var sound:Sound = MISS_SOUND[_status.miss];
+	sound.play(0, 0, new SoundTransform(1.0, pan));
 	key.highlight(0);
 	_keypad.flash(key, 0, 20);
 	_status.miss++;
 	_status.update();
-	if (MAX_MISS < _status.miss) {
+	if (MISS_SOUND.length <= _status.miss) {
 	  gameOver();
 	}
       }
