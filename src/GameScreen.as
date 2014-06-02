@@ -84,6 +84,7 @@ public class GameScreen extends Screen
   private var _arpeggio:Arpeggio;
   private var _keypad:Keypad;
 
+  private var _initialized:Boolean;
   private var _tutorial:Boolean;
   private var _repeat:int;
   private var _noteleft:int;
@@ -121,6 +122,7 @@ public class GameScreen extends Screen
     _ticks = 0;
     _start = 0;
 
+    _initialized = false;
     _tutorial = true;
     _guide.show("ARPEGGIO", 
 		"PRESS KEYS IN A CERTAIN ROW\nFROM LEFT TO RIGHT.",
@@ -146,12 +148,14 @@ public class GameScreen extends Screen
   // update()
   public override function update():void
   {
-    if (_start < _ticks) {
-      if ((_ticks % _interval) == 0) {
-	if (_repeat != 0) {
-	  // auto play
-	  playKey(_nextnote);
-	  incKey();
+    if (_initialized) {
+      if (_start < _ticks) {
+	if ((_ticks % _interval) == 0) {
+	  if (_repeat != 0) {
+	    // auto play
+	    playKey(_nextnote);
+	    incKey();
+	  }
 	}
       }
     }
@@ -173,6 +177,10 @@ public class GameScreen extends Screen
   public override function keydown(keycode:int):void
   {
     _guide.hide();
+    if (!_initialized) {
+      initGame();
+      return;
+    }
     if (keycode == Keyboard.F1) {
       // cheat.
       _status.level++;
@@ -391,6 +399,7 @@ public class GameScreen extends Screen
     _status.level = START_LEVEL;
     _status.score = 0;
     _status.update();
+    _initialized = true;
 
     setupLevel();
   }
@@ -400,8 +409,7 @@ public class GameScreen extends Screen
     _guide.show("GAME OVER", 
 		"PRESS KEY TO PLAY AGAIN.",
 		gameOverSound);
-    setDelay(DELAY);
-    initGame();
+    _initialized = false;
   }
 
   private function finishGame():void
@@ -409,8 +417,7 @@ public class GameScreen extends Screen
     _guide.show("CONGRATULATIONS!", 
 		"YOU BEAT THE GAME.",
 		finishSound);
-    setDelay(DELAY);
-    initGame();
+    _initialized = false;
   }
 }
 
