@@ -123,10 +123,14 @@ public class Keypad extends Sprite
     _height = size;
   }
 
-  public function flash(key:Keytop, color:uint):void
+  public function flash(key:Keytop, color:uint, duration:int=10):void
   {
-    if (key.rect != null) {
-      makeParticle(key.rect, color);
+    if (key != null) {
+      if (key.rect != null) {
+	makeParticle(key.rect, color, duration);
+      }
+    } else {
+      makeParticle(new Rectangle(0, 0, _width, _height), color, duration);
     }
   }
 
@@ -160,7 +164,7 @@ public class Keypad extends Sprite
   {
     var part:Particle = new Particle(rect, color, duration, speed);
     _particles.push(part);
-    addChild(part);
+    addChildAt(part, 0);
     return part;
   }
 }
@@ -179,26 +183,23 @@ class Particle extends Shape
   private var _count:int;
   
   public function Particle(rect:Rectangle, color:uint,
-			   duration:int=10, speed:int=2)
+			   duration:int=10, count:int=0, speed:int=2)
   {
     _rect = rect;
     _color = color;
     _duration = duration;
+    _count = count;
     _speed = speed;
-    _count = 0;
   }
 
   public function update():void
   {
     var w:int = _count*_speed;
+    var color:uint = (_color != 0)? _color : Utils.rnd(0xffffff);
     x = _rect.x-w;
     y = _rect.y-w;
     graphics.clear();
-    if (_color != 0) {
-      graphics.beginFill(_color, 1.0-_count/_duration);
-    } else {
-      graphics.lineStyle(1, Keytop.BORDER_COLOR);
-    }
+    graphics.beginFill(color, 1.0-_count/_duration);
     graphics.drawRect(0, 0, _rect.width+w*2, _rect.height+w*2);
     _count++;
     if (_duration <= _count) {

@@ -3,6 +3,7 @@ package {
 import flash.media.Sound;
 import flash.media.SoundTransform;
 import flash.geom.Rectangle;
+import flash.ui.Keyboard;
 import baseui.Screen;
 import baseui.ScreenEvent;
 
@@ -39,6 +40,7 @@ public class GameScreen extends Screen
   private const START_LEVEL:int = 0;
   private const MAX_MISS:int = 3;
   private const DELAY:int = 15;
+  private const VOLUME:Number = 0.1;
 
   public const TUNES:Array = 
     [
@@ -145,7 +147,7 @@ public class GameScreen extends Screen
       }
     }
 
-    var n:int = _interval*2;
+    var n:int = _interval*4;
     graphics.clear();
     drawBand(n-(_ticks % n));
     drawBand(n-((_ticks+3) % n));
@@ -162,12 +164,23 @@ public class GameScreen extends Screen
   public override function keydown(keycode:int):void
   {
     _guide.hide();
+    if (keycode == Keyboard.F1) {
+      // cheat.
+      _status.level++;
+      _status.update();
+      setupLevel();
+    }
     _keypad.keydown(keycode);
   }
 
   // keyup(keycode)
   public override function keyup(keycode:int):void 
   {
+  }
+
+  private function setDelay(delay:int):void
+  {
+    _start = Math.max(_start, _ticks+delay);
   }
 
   private function drawBand(t:int):void
@@ -211,16 +224,17 @@ public class GameScreen extends Screen
     } else if (i < _arpeggio.numNotes) {
       var key:Keytop = _keypad.getKeyByPos(i, 0);
       var pan:Number = _keypad.getPan(i);
-      _keypad.flash(key, 0);
       if (_arpeggio.hitNoise(i)) {
 	correctSound.play(0, 0, new SoundTransform(1.0, pan));
 	key.highlight(0xffffff);
+	_keypad.flash(key, 0xffffff);
 	_status.score++;
 	_status.update();
 	_noteleft--;
       } else {
 	wrongSound.play(0, 0, new SoundTransform(1.0, pan));
 	key.highlight(0);
+	_keypad.flash(key, 0, 20);
 	_status.miss++;
 	_status.update();
 	if (MAX_MISS < _status.miss) {
@@ -236,7 +250,7 @@ public class GameScreen extends Screen
     var key:Keytop = _keypad.getKeyByPos(i, 0);
     key.highlight(color);
     _keypad.flash(key, color);
-    _arpeggio.playNote(i, _keypad.getPan(i));
+    _arpeggio.playNote(i, VOLUME, _keypad.getPan(i));
   }
 
   private function incKey():void
@@ -248,9 +262,10 @@ public class GameScreen extends Screen
 	  _guide.show(null, "TRY TO SPOT WRONG NOTE\nBY PRESSING KEY.",
 		      guide1Sound);
 	}
-	_start = _ticks+DELAY;
+	setDelay(DELAY);
       }
       _repeat++;
+      _keypad.flash(null, 0x444444, 20);
       setupNoise();
     }
   }
@@ -353,12 +368,12 @@ public class GameScreen extends Screen
     _nextnote = 0;
 
     nextSound.play();
-    _arpeggio.playNote(0, 0, 0.5, 2.0);
+    _arpeggio.playNote(0, VOLUME*2, 0, 0.5, 2.0);
 
     _status.miss = 0;
     _status.update();
-    
-    _start = _ticks+DELAY;
+
+    setDelay(DELAY);
   }
 
   private function initGame():void
@@ -375,7 +390,7 @@ public class GameScreen extends Screen
     _guide.show("GAME OVER", 
 		"PRESS KEY TO PLAY AGAIN.",
 		gameOverSound);
-    _start = _ticks+DELAY;
+    setDelay(DELAY);
     initGame();
   }
 
@@ -384,7 +399,7 @@ public class GameScreen extends Screen
     _guide.show("CONGRATULATIONS!", 
 		"YOU BEAT THE GAME.",
 		finishSound);
-    _start = _ticks+DELAY;
+    setDelay(DELAY);
     initGame();
   }
 }
@@ -398,6 +413,7 @@ import flash.geom.Rectangle;
 import flash.geom.Point;
 import flash.media.Sound;
 import flash.media.SoundChannel;
+import flash.media.SoundTransform;
 import baseui.Font;
 
 
@@ -420,8 +436,6 @@ class Tune extends Object
 // 
 class Arpeggio extends Object
 {
-  public var volume:Number = 0.1;
-
   private var _tune:Tune;
   private var _noise:Array;
 
@@ -508,17 +522,16 @@ class Arpeggio extends Object
     }
   }
 
-  public function playNote(i:int, pan:Number, attack:Number=0.01, decay:Number=0.3):void
+  public function playNote(i:int, volume:Number, pan:Number, 
+			   attack:Number=0.01, decay:Number=0.3):void
   {
     var note:String = getNote(i);
     if (note) {
       var sound:SoundGenerator = new SoundGenerator(SoundGenerator.RECT);
       sound.pitch = SoundGenerator.getPitch(note);
-      sound.pan = pan;
-      sound.volume = volume;
       sound.attack = attack;
       sound.decay = decay;
-      sound.play();
+      sound.play(0, 0, new SoundTransform(volume, pan));
     }
   }
 }
