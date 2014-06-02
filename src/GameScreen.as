@@ -47,9 +47,14 @@ public class GameScreen extends Screen
   private const finishSound:Sound = new FinishSoundCls();
 
   private const MISS_SOUND:Array = [ wrong1Sound, wrong2Sound, wrong3Sound, bangSound ];
-  private const START_LEVEL:int = 0;
-  private const DELAY:int = 15;
-  private const VOLUME:Number = 0.1;
+  private const TUNE_VOLUME:Number = 0.1;
+
+  private const START_DELAY:int = 15;
+  private const SHORT_FLASH:int = 10;
+  private const LONG_FLASH:int = 25;
+
+  private const BAND_COLOR:uint = 0x333333;
+  private const CORRECT_COLOR:uint = 0xffffff;
 
   public const TUNES:Array = 
     [
@@ -210,7 +215,7 @@ public class GameScreen extends Screen
     var dx1:Number = screenWidth*2/(t+0.5);
     var dy1:Number = screenHeight/2/(t+0.5);
     graphics.lineStyle(0, 0);
-    graphics.beginFill(0x333333);
+    graphics.beginFill(BAND_COLOR);
 
     graphics.moveTo(cx-dx1, cy);
     graphics.lineTo(cx-dx0, cy);
@@ -243,16 +248,15 @@ public class GameScreen extends Screen
       var pan:Number = _keypad.getPan(i);
       if (_arpeggio.hitNoise(i)) {
 	correctSound.play(0, 0, new SoundTransform(1.0, pan));
-	key.highlight(0xffffff);
-	_keypad.flash(key, 0xffffff);
+	key.highlight(CORRECT_COLOR, SHORT_FLASH);
+	_keypad.flash(key, CORRECT_COLOR, SHORT_FLASH);
 	_status.score++;
 	_status.update();
 	_noteleft--;
       } else {
 	var sound:Sound = MISS_SOUND[_status.miss];
 	sound.play(0, 0, new SoundTransform(1.0, pan));
-	key.highlight(0);
-	_keypad.flash(key, 0, 20);
+	_keypad.flash(key, 0, LONG_FLASH);
 	_status.miss++;
 	_status.update();
 	if (MISS_SOUND.length <= _status.miss) {
@@ -268,7 +272,7 @@ public class GameScreen extends Screen
     var key:Keytop = _keypad.getKeyByPos(i, 0);
     key.highlight(color);
     _keypad.flash(key, color);
-    _arpeggio.playNote(i, VOLUME, _keypad.getPan(i));
+    _arpeggio.playNote(i, TUNE_VOLUME, _keypad.getPan(i));
   }
 
   private function incKey():void
@@ -280,10 +284,9 @@ public class GameScreen extends Screen
 	  _guide.show(null, "TRY TO SPOT WRONG NOTE\nBY PRESSING KEY.",
 		      guide1Sound);
 	}
-	setDelay(DELAY);
+	setDelay(START_DELAY);
       }
       _repeat++;
-      _keypad.flash(null, 0x444444, 20);
       setupNoise();
     }
   }
@@ -386,17 +389,17 @@ public class GameScreen extends Screen
     _nextnote = 0;
 
     nextSound.play();
-    _arpeggio.playNote(0, VOLUME*2, 0, 0.5, 2.0);
+    _arpeggio.playNote(0, TUNE_VOLUME*2, 0, 0.5, 2.0);
 
     _status.miss = 0;
     _status.update();
 
-    setDelay(DELAY);
+    setDelay(START_DELAY);
   }
 
   private function initGame():void
   {
-    _status.level = START_LEVEL;
+    _status.level = 0;
     _status.score = 0;
     _status.update();
     _initialized = true;

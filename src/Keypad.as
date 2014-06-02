@@ -129,8 +129,6 @@ public class Keypad extends Sprite
       if (key.rect != null) {
 	makeParticle(key.rect, color, duration);
       }
-    } else {
-      makeParticle(new Rectangle(0, 0, _width, _height), color, duration);
     }
   }
 
