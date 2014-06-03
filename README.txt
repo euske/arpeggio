@@ -6,9 +6,10 @@ Author: euske (Yusuke Shinyama)
 
 --
 Narration:
- "Arpeggio. Press the keys in a certain row from left to right."
+ "Arpeggio. Press the keys in a certain row from left to right, such as A S D F."
  "Try to spot a wrong note by pressing the key."
  "Now the difficulty is increased. Press the keys again."
+ "Now the tune gets longer."
  "The Game is over. Press a key to play again."
  "Congratulations. You beat the game."
 

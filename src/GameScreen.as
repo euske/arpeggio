@@ -39,6 +39,9 @@ public class GameScreen extends Screen
   [Embed(source="../assets/guides/guide2.mp3", mimeType="audio/mpeg")]
   private static const Guide2SoundCls:Class;
   private const guide2Sound:Sound = new Guide2SoundCls();
+  [Embed(source="../assets/guides/guide3.mp3", mimeType="audio/mpeg")]
+  private static const Guide3SoundCls:Class;
+  private const guide3Sound:Sound = new Guide3SoundCls();
   [Embed(source="../assets/guides/gameover.mp3", mimeType="audio/mpeg")]
   private static const GameOverSoundCls:Class;
   private const gameOverSound:Sound = new GameOverSoundCls();
@@ -90,7 +93,7 @@ public class GameScreen extends Screen
   private var _keypad:Keypad;
 
   private var _initialized:Boolean;
-  private var _tutorial:Boolean;
+  private var _tutorial:int;
   private var _repeat:int;
   private var _noteleft:int;
 
@@ -128,7 +131,7 @@ public class GameScreen extends Screen
     _start = 0;
 
     _initialized = false;
-    _tutorial = true;
+    _tutorial = 0;
     _guide.show("ARPEGGIO", 
 		"PRESS KEYS IN A CERTAIN ROW\nFROM LEFT TO RIGHT.",
 		welcomeSound);
@@ -280,7 +283,8 @@ public class GameScreen extends Screen
     _nextnote++;
     if (_arpeggio.numNotes <= _nextnote) {
       if (_repeat == 0) {
-	if (_tutorial && _status.level == 0) {
+	if (_tutorial < 1 && _status.level == 0) {
+	  _tutorial = 1;
 	  _guide.show(null, "TRY TO SPOT WRONG NOTE\nBY PRESSING KEY.",
 		      guide1Sound);
 	}
@@ -350,8 +354,8 @@ public class GameScreen extends Screen
     case 1:
       _interval = 8;
       _noteleft = 6;
-      if (_tutorial) {
-	_tutorial = false;
+      if (_tutorial < 2) {
+	_tutorial = 2;
 	_guide.show(null, "DIFFICULTY IS INCREASED.\nPRESS KEYS AGAIN.",
 		    guide2Sound);
       }
@@ -361,12 +365,22 @@ public class GameScreen extends Screen
     case 3:
       _interval = 8;
       _noteleft = 8;
+      if (_tutorial < 3) {
+	_tutorial = 3;
+	_guide.show(null, "NOW TUNE GETS LONGER.",
+		    guide3Sound);
+      }
       break;
 
     case 4:
     case 5:
       _interval = 6;
       _noteleft = 10;
+      if (_tutorial < 4) {
+	_tutorial = 4;
+	_guide.show(null, "NOW TUNE GETS LONGER.",
+		    guide3Sound);
+      }
       break;
 
     case 6:
