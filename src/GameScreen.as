@@ -45,9 +45,9 @@ public class GameScreen extends Screen
   [Embed(source="../assets/guides/gameover.mp3", mimeType="audio/mpeg")]
   private static const GameOverSoundCls:Class;
   private const gameOverSound:Sound = new GameOverSoundCls();
-  [Embed(source="../assets/guides/finish.mp3", mimeType="audio/mpeg")]
-  private static const FinishSoundCls:Class;
-  private const finishSound:Sound = new FinishSoundCls();
+  [Embed(source="../assets/guides/ending.mp3", mimeType="audio/mpeg")]
+  private static const EndingSoundCls:Class;
+  private const endingSound:Sound = new EndingSoundCls();
 
   private const MISS_SOUND:Array = [ wrong1Sound, wrong2Sound, wrong3Sound, bangSound ];
   private const TUNE_VOLUME:Number = 0.1;
@@ -433,7 +433,7 @@ public class GameScreen extends Screen
   {
     _guide.show("CONGRATULATIONS!", 
 		"YOU BEAT THE GAME.",
-		finishSound);
+		endingSound, 10);
     _initialized = false;
   }
 }
