@@ -434,6 +434,8 @@ public class GameScreen extends Screen
     _guide.show("CONGRATULATIONS!", 
 		"YOU BEAT THE GAME.",
 		endingSound, 10);
+    // ending screen
+    _keypad.randomFlash(150);
     _initialized = false;
   }
 }

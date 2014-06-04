@@ -77,6 +77,15 @@ public class Keypad extends Sprite
     }
   }
 
+  public function randomFlash(duration:int=30):void
+  {
+    for each (var key:Keytop in _keys) {
+      if (key.parent == this) {
+	key.highlight(0, duration);
+      }
+    }
+  }
+
   public function clear():void
   {
     for each (var key:Keytop in _keys) {
