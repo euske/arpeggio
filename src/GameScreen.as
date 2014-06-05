@@ -3,6 +3,7 @@ package {
 import flash.media.Sound;
 import flash.media.SoundTransform;
 import flash.geom.Rectangle;
+import flash.events.MouseEvent;
 import flash.ui.Keyboard;
 import baseui.Screen;
 import baseui.ScreenEvent;
@@ -122,6 +123,7 @@ public class GameScreen extends Screen
     _guide.y = (height-_guide.height)/2;
     addChild(_guide);
 
+    addEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
   }
 
   // open()
@@ -234,6 +236,15 @@ public class GameScreen extends Screen
       graphics.lineTo(cx-dx0, cy+dy0);
       graphics.lineTo(cx+dx0, cy+dy0);
       graphics.lineTo(cx+dx1, cy+dy1);
+    }
+  }
+
+  private function onMouseDown(e:MouseEvent):void
+  {
+    _guide.hide();
+    if (!_initialized) {
+      initGame();
+      return;
     }
   }
 

@@ -1,6 +1,7 @@
 package {
 
 import flash.display.Sprite;
+import flash.events.MouseEvent;
 import flash.geom.Rectangle;
 import flash.geom.Point;
 
@@ -43,6 +44,9 @@ public class Keypad extends Sprite
     }
 
     _particles = new Array();
+
+    addEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
+    addEventListener(MouseEvent.MOUSE_MOVE, onMouseMove);
   }
 
   public function get rect():Rectangle
@@ -56,6 +60,18 @@ public class Keypad extends Sprite
     if (key != null) {
       dispatchEvent(new KeypadEvent(KeypadEvent.PRESSED, key));
     }
+  }
+
+  protected function onMouseDown(e:MouseEvent):void
+  {
+    var key:Keytop = getKeyByCoords(e.localX, e.localY);
+    if (key != null) {
+      dispatchEvent(new KeypadEvent(KeypadEvent.PRESSED, key));
+    }
+  }
+
+  protected function onMouseMove(e:MouseEvent):void
+  {
   }
 
   public function update():void
@@ -161,6 +177,16 @@ public class Keypad extends Sprite
       var a:Array = _pos2key[y];
       if (0 <= x && x < a.length) {
 	return a[x];
+      }
+    }
+    return null;
+  }
+
+  public function getKeyByCoords(x:int, y:int):Keytop
+  {
+    for each (var key:Keytop in _keys) {
+      if (key.parent == this) {
+	if (key.rect.contains(x, y)) return key;
       }
     }
     return null;
