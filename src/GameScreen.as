@@ -262,15 +262,15 @@ public class GameScreen extends Screen
       var pan:Number = _keypad.getPan(i);
       if (_arpeggio.hitNoise(i)) {
 	correctSound.play(0, 0, new SoundTransform(1.0, pan));
-	key.highlight(CORRECT_COLOR, SHORT_FLASH);
-	_keypad.flash(key, CORRECT_COLOR, SHORT_FLASH);
+	key.flash(CORRECT_COLOR, SHORT_FLASH);
+	_keypad.makeParticle(key.rect, CORRECT_COLOR, SHORT_FLASH);
 	_status.score++;
 	_status.update();
 	_noteleft--;
       } else {
 	var sound:Sound = MISS_SOUND[_status.miss];
 	sound.play(0, 0, new SoundTransform(1.0, pan));
-	_keypad.flash(key, 0, LONG_FLASH);
+	_keypad.makeParticle(key.rect, 0, LONG_FLASH);
 	_status.miss++;
 	_status.update();
 	if (MISS_SOUND.length <= _status.miss) {
@@ -284,8 +284,8 @@ public class GameScreen extends Screen
   {
     var color:uint = _arpeggio.getColor(i);
     var key:Keytop = _keypad.getKeyByPos(i, 0);
-    key.highlight(color);
-    _keypad.flash(key, color);
+    key.flash(color, SHORT_FLASH);
+    _keypad.makeParticle(key.rect, color, SHORT_FLASH);
     _arpeggio.playNote(i, TUNE_VOLUME, _keypad.getPan(i));
   }
 
@@ -446,7 +446,7 @@ public class GameScreen extends Screen
 		"YOU BEAT THE GAME.",
 		endingSound, 10);
     // ending screen
-    _keypad.randomFlash(150);
+    _keypad.flashAll(150);
     _initialized = false;
   }
 }

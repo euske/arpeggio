@@ -23,6 +23,7 @@ public class Keypad extends Sprite
   private var _pos2key:Array;
   private var _keys:Array;
   private var _particles:Array;
+  private var _focus:Keytop;
 
   public function Keypad()
   {
@@ -47,6 +48,7 @@ public class Keypad extends Sprite
 
     addEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
     addEventListener(MouseEvent.MOUSE_MOVE, onMouseMove);
+    addEventListener(MouseEvent.MOUSE_OUT, onMouseMove);
   }
 
   public function get rect():Rectangle
@@ -72,6 +74,16 @@ public class Keypad extends Sprite
 
   protected function onMouseMove(e:MouseEvent):void
   {
+    var key:Keytop = getKeyByCoords(e.localX, e.localY);
+    if (_focus != key) {
+      if (_focus != null) {
+	_focus.highlight = false;
+      }
+      _focus = key;
+      if (_focus != null) {
+	_focus.highlight = true;
+      }
+    }
   }
 
   public function update():void
@@ -93,11 +105,11 @@ public class Keypad extends Sprite
     }
   }
 
-  public function randomFlash(duration:int=30):void
+  public function flashAll(duration:int=30):void
   {
     for each (var key:Keytop in _keys) {
       if (key.parent == this) {
-	key.highlight(0, duration);
+	key.flash(0, duration);
       }
     }
   }
@@ -146,15 +158,6 @@ public class Keypad extends Sprite
     _cols = n;
     _width = w;
     _height = size;
-  }
-
-  public function flash(key:Keytop, color:uint, duration:int=10):void
-  {
-    if (key != null) {
-      if (key.rect != null) {
-	makeParticle(key.rect, color, duration);
-      }
-    }
   }
 
   public function getPan(x:int):Number

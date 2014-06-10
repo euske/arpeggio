@@ -1,11 +1,13 @@
 package {
 
 import flash.display.Shape;
+import flash.events.MouseEvent;
 import flash.geom.Rectangle;
 import flash.geom.Point;
 
 public class Keytop extends Shape
 {
+  public static const HIGHLIT_COLOR:uint = 0xffffff;
   public static const BORDER_COLOR:uint = 0x666666;
 
   private var _pos:Point;
@@ -13,6 +15,8 @@ public class Keytop extends Shape
   private var _color:uint;
   private var _duration:int;
   private var _count:int;
+  private var _highlight:Boolean;
+  private var _invalidated:Boolean;
   
   public function Keytop(pos:Point)
   {
@@ -32,7 +36,7 @@ public class Keytop extends Shape
   public function set rect(v:Rectangle):void
   {
     _rect = v;
-    repaint();
+    _invalidated = true;
   }
   
   public function get rect():Rectangle
@@ -40,12 +44,23 @@ public class Keytop extends Shape
     return _rect;
   }
 
-  public function highlight(color:uint, duration:int=10):void
+  public function set highlight(v:Boolean):void
   {
+    _highlight = v;
+    _invalidated = true;
+  }
+  
+  public function get highlight():Boolean
+  {
+    return _highlight;
+  }
+
+  public function flash(color:uint, duration:int):void
+  {
+    _count = 0;
     _color = color;
     _duration = duration;
-    _count = 0;
-    repaint();
+    _invalidated = true;
   }
 
   public function repaint():void
@@ -54,7 +69,11 @@ public class Keytop extends Shape
       x = _rect.x;
       y = _rect.y;
       graphics.clear();
-      graphics.lineStyle(0, BORDER_COLOR);
+      if (_highlight) {
+	graphics.lineStyle(2, HIGHLIT_COLOR);
+      } else {
+	graphics.lineStyle(0, BORDER_COLOR);
+      }
       graphics.beginFill(0);
       graphics.drawRect(0, 0, _rect.width, _rect.height);
       if (_count < _duration) {
@@ -69,10 +88,13 @@ public class Keytop extends Shape
   {
     if (_duration) {
       _count++;
+      _invalidated = true;
+    }
+    if (_invalidated) {
+      _invalidated = false;
       repaint();
     }
   }
-
 }
 
 } // package
