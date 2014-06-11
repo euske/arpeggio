@@ -46,8 +46,8 @@ public class Keypad extends Sprite
 
     _particles = new Array();
 
-    addEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
     addEventListener(MouseEvent.MOUSE_MOVE, onMouseMove);
+    addEventListener(MouseEvent.MOUSE_OVER, onMouseMove);
     addEventListener(MouseEvent.MOUSE_OUT, onMouseMove);
   }
 
@@ -64,25 +64,11 @@ public class Keypad extends Sprite
     }
   }
 
-  protected function onMouseDown(e:MouseEvent):void
+  public function mousedown(p:Point):void
   {
-    var key:Keytop = getKeyByCoords(e.localX, e.localY);
+    var key:Keytop = getKeyByCoords(p.x, p.y);
     if (key != null) {
       dispatchEvent(new KeypadEvent(KeypadEvent.PRESSED, key));
-    }
-  }
-
-  protected function onMouseMove(e:MouseEvent):void
-  {
-    var key:Keytop = getKeyByCoords(e.localX, e.localY);
-    if (_focus != key) {
-      if (_focus != null) {
-	_focus.highlight = false;
-      }
-      _focus = key;
-      if (_focus != null) {
-	_focus.highlight = true;
-      }
     }
   }
 
@@ -203,6 +189,21 @@ public class Keypad extends Sprite
     addChildAt(part, 0);
     return part;
   }
+
+  private function onMouseMove(e:MouseEvent):void
+  {
+    var key:Keytop = getKeyByCoords(e.localX, e.localY);
+    if (_focus != key) {
+      if (_focus != null) {
+	_focus.highlight = false;
+      }
+      _focus = key;
+      if (_focus != null) {
+	_focus.highlight = true;
+      }
+    }
+  }
+
 }
 
 } // package

@@ -2,6 +2,7 @@ package {
 
 import flash.media.Sound;
 import flash.media.SoundTransform;
+import flash.geom.Point;
 import flash.geom.Rectangle;
 import flash.events.MouseEvent;
 import flash.ui.Keyboard;
@@ -205,6 +206,18 @@ public class GameScreen extends Screen
   {
   }
 
+  // mouseDown
+  private function onMouseDown(e:MouseEvent):void
+  {
+    _guide.hide();
+    if (!_initialized) {
+      initGame();
+      return;
+    }
+    var p:Point = new Point(e.stageX, e.stageY);
+    _keypad.mousedown(_keypad.globalToLocal(p));
+  }
+
   private function setDelay(delay:int):void
   {
     _start = Math.max(_start, _ticks+delay);
@@ -236,15 +249,6 @@ public class GameScreen extends Screen
       graphics.lineTo(cx-dx0, cy+dy0);
       graphics.lineTo(cx+dx0, cy+dy0);
       graphics.lineTo(cx+dx1, cy+dy1);
-    }
-  }
-
-  private function onMouseDown(e:MouseEvent):void
-  {
-    _guide.hide();
-    if (!_initialized) {
-      initGame();
-      return;
     }
   }
 
