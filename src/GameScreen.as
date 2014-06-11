@@ -428,16 +428,17 @@ public class GameScreen extends Screen
 
   private function initGame():void
   {
+    trace("initGame");
     _status.level = 0;
     _status.score = 0;
     _status.update();
     _initialized = true;
-
     setupLevel();
   }
 
   private function gameOver():void
   {
+    trace("gameOver");
     _guide.show("GAME OVER", 
 		"PRESS KEY TO PLAY AGAIN.",
 		gameOverSound);
@@ -446,6 +447,7 @@ public class GameScreen extends Screen
 
   private function finishGame():void
   {
+    trace("finishGame");
     _guide.show("CONGRATULATIONS!", 
 		"YOU BEAT THE GAME.",
 		endingSound, 10);
